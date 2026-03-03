@@ -127,13 +127,17 @@
               <th>MODEL</th>
               <th>YEAR</th>
               <th>ENGINE</th>
-              <th>COLOR</th>
+              <th>EXT. COLOR</th>
+              <th>INT. COLOR</th>
+              <th>INT. MATERIAL</th>
+              <th>TRANS.</th>
               <th>COUNTRY</th>
               <th>OWNER</th>
+              <th>UPDATED</th>
             </tr>
           </thead>
           <tbody id="registryTableBody">
-            <tr><td colspan="9" class="table-placeholder">Loading registry&hellip;</td></tr>
+            <tr><td colspan="13" class="table-placeholder">Loading registry&hellip;</td></tr>
           </tbody>
         </table>
       </div>
@@ -222,11 +226,11 @@
           <legend>Manufacturing Details</legend>
           <div class="form-grid">
             <div class="form-group">
-              <label for="f-year">Production Year</label>
+              <label for="f-year">Mfg. Year</label>
               <input type="number" id="f-year" placeholder="e.g. 1994" min="1981" max="2010" />
             </div>
             <div class="form-group">
-              <label for="f-month">Production Month</label>
+              <label for="f-month">Mfg. Month</label>
               <select id="f-month">
                 <option value="">Unknown</option>
                 <option value="1">January</option><option value="2">February</option>
@@ -237,6 +241,36 @@
                 <option value="11">November</option><option value="12">December</option>
               </select>
             </div>
+            <div class="form-group">
+              <label for="f-plant">Plant</label>
+              <input type="text" id="f-plant" placeholder="e.g. Motomachi, Tahara" />
+            </div>
+            <div class="form-group">
+              <label for="f-body">Body</label>
+              <select id="f-body">
+                <option value="">Unknown</option>
+                <option value="Hardtop">Hardtop</option>
+                <option value="Sunroof">Sunroof</option>
+                <option value="Targa">Targa / Removable Roof Panel</option>
+                <option value="Aerocabin">Aerocabin (Z20)</option>
+                <option value="Convertible">Retractable Hardtop (Z40)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-body-shape">Body Shape</label>
+              <select id="f-body-shape">
+                <option value="">Unknown</option>
+                <option value="2-door Coupe">2-door Coupe</option>
+                <option value="2-door Convertible">2-door Convertible</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section: Specification -->
+        <fieldset class="form-section">
+          <legend>Specification</legend>
+          <div class="form-grid">
             <div class="form-group">
               <label for="f-engine">Engine</label>
               <select id="f-engine">
@@ -252,23 +286,55 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="f-drive">Drive Side</label>
+              <label for="f-gear-shift">Gear Shift</label>
+              <select id="f-gear-shift">
+                <option value="">Unknown</option>
+                <option value="Floor">Floor</option>
+                <option value="Column">Column</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-fuel-system">Fuel System</label>
+              <select id="f-fuel-system">
+                <option value="">Unknown</option>
+                <option value="EFI">EFI (Electronic Fuel Injection)</option>
+                <option value="Carburettor">Carburettor</option>
+                <option value="Twin Turbo EFI">Twin Turbo EFI</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-drive">Driver Position</label>
               <select id="f-drive">
                 <option value="">Unknown</option>
                 <option value="RHD">RHD (Right Hand Drive)</option>
                 <option value="LHD">LHD (Left Hand Drive)</option>
               </select>
             </div>
+          </div>
+        </fieldset>
+
+        <!-- Section: Grade & Market -->
+        <fieldset class="form-section">
+          <legend>Grade &amp; Market</legend>
+          <div class="form-grid">
             <div class="form-group">
-              <label for="f-body">Body Type</label>
-              <select id="f-body">
+              <label for="f-grade">Grade</label>
+              <input type="text" id="f-grade" placeholder="e.g. GT-Limited, Anniversary Edition" />
+            </div>
+            <div class="form-group">
+              <label for="f-market">Market</label>
+              <select id="f-market">
                 <option value="">Unknown</option>
-                <option value="Hardtop">Hardtop</option>
-                <option value="Sunroof">Sunroof</option>
-                <option value="Targa">Targa / Removable Roof Panel</option>
-                <option value="Aerocabin">Aerocabin (Z20)</option>
-                <option value="Convertible">Retractable Hardtop (Z40)</option>
+                <option value="Japan Domestic">Japan Domestic</option>
+                <option value="North America">North America</option>
+                <option value="Europe">Europe</option>
+                <option value="Australia">Australia</option>
+                <option value="Other Export">Other Export</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label for="f-destination">Destination</label>
+              <input type="text" id="f-destination" placeholder="e.g. Japan, USA, UK" />
             </div>
           </div>
         </fieldset>
@@ -286,8 +352,49 @@
               <input type="text" id="f-color-code" placeholder="e.g. 040, 8L6" maxlength="10" />
             </div>
             <div class="form-group">
+              <label for="f-trim-code">Trim Code</label>
+              <input type="text" id="f-trim-code" placeholder="e.g. TB20" maxlength="10" />
+            </div>
+            <div class="form-group">
               <label for="f-interior">Interior Color</label>
-              <input type="text" id="f-interior" placeholder="e.g. Black leather, Ivory tan" />
+              <input type="text" id="f-interior" placeholder="e.g. Black, Ivory" />
+            </div>
+            <div class="form-group">
+              <label for="f-interior-material">Interior Material</label>
+              <select id="f-interior-material">
+                <option value="">Unknown</option>
+                <option value="Leather">Leather</option>
+                <option value="Velour">Velour</option>
+                <option value="Suede">Suede</option>
+                <option value="Alcantara">Alcantara</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section: Status -->
+        <fieldset class="form-section">
+          <legend>Status &amp; Verification</legend>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="f-title-status">Title Status</label>
+              <select id="f-title-status">
+                <option value="">Unknown</option>
+                <option value="Clean">Clean</option>
+                <option value="Salvage">Salvage</option>
+                <option value="Rebuilt">Rebuilt</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-verification">Verification</label>
+              <select id="f-verification">
+                <option value="">Unverified</option>
+                <option value="VIN Verified">VIN Verified</option>
+                <option value="Frame Verified">Frame Verified</option>
+                <option value="Fully Verified">Fully Verified</option>
+              </select>
             </div>
           </div>
         </fieldset>

@@ -221,10 +221,9 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 .nav-brand-text {
-  font-family: var(--font-display);
+  font-family: var(--font-head);
   font-size: 14px;
   font-weight: 700;
-  font-style: normal;
   letter-spacing: 0.04em;
   color: var(--white);
 }
@@ -289,6 +288,11 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   overflow: hidden;
+  background-image: url('../img/containerbg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: var(--bg);
 }
 
 .hero-bg { display: none; }
@@ -300,16 +304,6 @@ textarea { resize: vertical; }
   margin: 0 auto;
   padding: 90px 24px 80px;
   width: 100%;
-  background-image: url('../img/containerbg.png');
-  background-size: cover;
-  background-position: center;
-}
-.hero-content::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(4,6,20,0.72) 0%, rgba(4,8,26,0.52) 100%);
-  pointer-events: none;
 }
 .hero-eyebrow {
   font-family: var(--font-head);
@@ -1274,10 +1268,91 @@ textarea { resize: vertical; }
 
 
 /* ══════════════════════════════════════════
+   CAR DETAIL — FULL-WIDTH SPEC LAYOUT
+══════════════════════════════════════════ */
+.car-detail-body {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+}
+
+.car-detail-year {
+  font-family: var(--font-head);
+  font-size: 0.5em;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--accent-hi);
+  margin-left: 20px;
+  vertical-align: middle;
+}
+
+.car-detail-gallery-full {
+  width: 100%;
+}
+
+.car-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+/* Ownership section */
+.car-ownership-section {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.ownership-section-title {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+.owner-cards { display: flex; flex-wrap: wrap; gap: 16px; }
+.owner-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: 260px;
+  max-width: 400px;
+}
+.owner-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.owner-info { min-width: 0; }
+.owner-name { font-weight: 700; color: var(--white); font-size: 14px; line-height: 1.2; }
+.owner-username { font-size: 12px; color: var(--accent-hi); margin-top: 2px; }
+.owner-meta { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.8; }
+
+/* Last-updated column */
+.td-updated { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+
+/* ══════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .car-detail-wrap { grid-template-columns: 1fr 320px; }
+  .car-spec-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
 
 @media (max-width: 900px) {
