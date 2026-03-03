@@ -290,7 +290,7 @@ textarea { resize: vertical; }
   overflow: hidden;
   background-image: url('../img/containerbg.jpeg');
   background-size: cover;
-  background-position: center;
+  background-position: bottom;
   background-attachment: fixed;
   background-color: var(--bg);
 }
