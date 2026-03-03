@@ -1,67 +1,63 @@
-/* =============================================================================
-   THE SOARER REGISTRY — Shared Components
-   Edit this file to update the navbar and footer across the entire site.
-   ============================================================================= */
+/* =========================================
+   SOARER REGISTRY — COMPONENTS
+   Navbar + Footer injected into every page
+   ========================================= */
 
 const NAVBAR_HTML = `
 <nav class="navbar" id="navbar">
   <div class="nav-inner">
-    <a class="nav-brand" href="#" onclick="showPage('home')">
-      <div class="nav-logo-badge">TSR</div>
-      <div class="nav-brand-text">
-        <span class="nav-brand-name">THE SOARER REGISTRY</span>
-        <span class="nav-brand-sub">Global Chassis Database</span>
-      </div>
+    <a class="nav-brand" href="#" onclick="showPage('home'); return false;">
+      <img
+        src="img/logo.jpg"
+        alt="TSR"
+        class="nav-logo"
+        onerror="this.style.display='none';document.getElementById('nav-logo-fb').style.display='flex';"
+      />
+      <span class="nav-logo-fallback" id="nav-logo-fb">TSR</span>
+      <span class="nav-brand-text">THE SOARER REGISTRY</span>
     </a>
 
     <div class="nav-links" id="navLinks">
-      <a href="#" onclick="showPage('home')">Home</a>
-      <a href="#" onclick="showPage('registry')">Registry</a>
-      <a href="#" onclick="showPage('submit')">Register a Car</a>
-      <a href="#" onclick="showPage('about')">About</a>
+      <a href="#" onclick="showPage('home'); return false;">Home</a>
+      <a href="#" onclick="scrollToRegistry(); return false;">Registry</a>
+      <a href="#" onclick="showPage('submit'); return false;">Register</a>
+      <a href="#" onclick="showPage('about'); return false;">About</a>
     </div>
 
-    <div class="nav-auth" id="navAuth">
-      <button class="btn btn-ghost btn-sm" onclick="showModal('loginModal')">Member Login</button>
-      <button class="btn btn-primary btn-sm" onclick="showModal('registerModal')">Join Registry</button>
+    <div class="nav-right">
+      <div class="nav-auth" id="navAuth">
+        <button class="btn btn-ghost btn-sm" onclick="showModal('loginModal')">Login</button>
+        <button class="btn btn-accent btn-sm" onclick="showModal('registerModal')">Join</button>
+      </div>
+      <div class="nav-user hidden" id="navUser">
+        <span id="navUsername" class="nav-username"></span>
+        <button class="btn btn-outline btn-sm" onclick="showPage('profile')">My Garage</button>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
+      </div>
+      <button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-
-    <div class="nav-user hidden" id="navUser">
-      <span class="nav-member-tag">MEMBER</span>
-      <span id="navUsername" class="nav-username"></span>
-      <button class="btn btn-outline btn-sm" onclick="showPage('profile')">My Garage</button>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
-    </div>
-
-    <button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Toggle navigation">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
   </div>
 </nav>
 `;
 
 const FOOTER_HTML = `
 <footer class="footer">
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand-block">
-        <div class="footer-badge">TSR</div>
-        <div class="footer-brand-info">
-          <div class="footer-brand-name">THE SOARER REGISTRY</div>
-          <p class="footer-tagline">Documenting the Legend &bull; Est. 1981</p>
-        </div>
-      </div>
-      <nav class="footer-nav">
-        <a href="#" onclick="showPage('home')">Home</a>
-        <a href="#" onclick="showPage('registry')">Registry</a>
-        <a href="#" onclick="showPage('submit')">Register a Car</a>
-        <a href="#" onclick="showPage('about')">About</a>
-      </nav>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <span class="footer-brand">THE SOARER REGISTRY</span>
+      <span class="footer-tag">Global Chassis Database &bull; Est. 1981</span>
     </div>
-    <div class="footer-bottom">
-      <span>&copy; 2025 The Soarer Registry &mdash; A community project. Not affiliated with Toyota Motor Corporation or Lexus.</span>
+    <nav class="footer-nav">
+      <a href="#" onclick="showPage('home'); return false;">Home</a>
+      <a href="#" onclick="scrollToRegistry(); return false;">Registry</a>
+      <a href="#" onclick="showPage('submit'); return false;">Register</a>
+      <a href="#" onclick="showPage('about'); return false;">About</a>
+    </nav>
+    <div class="footer-right">
+      <span class="footer-copy">&copy; 2025 The Soarer Registry</span>
+      <span class="footer-disc">Not affiliated with Toyota Motor Corporation or Lexus.</span>
     </div>
   </div>
 </footer>
@@ -74,5 +70,4 @@ function initComponents() {
   if (footerRoot) footerRoot.innerHTML = FOOTER_HTML;
 }
 
-// Inject immediately when the script loads (DOM is ready — scripts are at end of body)
 initComponents();
