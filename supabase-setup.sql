@@ -193,6 +193,7 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS destination       TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS trim_code         TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS title_status      TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS verification      TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS vin_matched       BOOLEAN DEFAULT NULL;
 
 -- ================================================================
 -- SETUP COMPLETE — return to config.js and fill in your credentials
