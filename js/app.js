@@ -565,7 +565,6 @@ function renderCarDetail(car) {
             ${row('Engine', car.engine)}
             ${row('Transmission Type', car.transmission)}
             ${row('Transmission', car.gear_shift)}
-            ${row('Fuel System', car.fuel_system)}
             ${row('Driver Position', car.drive_side)}
           </div>
 
