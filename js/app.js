@@ -165,7 +165,10 @@ async function doRegister(e) {
 
   const { data, error } = await db.auth.signUp({
     email, password,
-    options: { data: { username, display_name: display || username } }
+    options: {
+      data: { username, display_name: display || username },
+      emailRedirectTo: window.location.origin
+    }
   });
 
   if (error) {
