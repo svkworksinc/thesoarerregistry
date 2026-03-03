@@ -602,6 +602,44 @@ function selectImage(index) {
     .forEach((t, i) => t.classList.toggle('active', i === index));
 }
 
+// ── FEEDBACK ──────────────────────────────────────────────
+async function submitFeedback(e) {
+  e.preventDefault();
+  const errEl  = document.getElementById('fbError');
+  const okEl   = document.getElementById('fbSuccess');
+  const btn    = document.getElementById('fbSubmitBtn');
+  const msg    = document.getElementById('fbMessage').value.trim();
+
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+  if (!msg) { errEl.textContent = 'Please enter a message.'; errEl.classList.remove('hidden'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await db.from('feedback').insert({
+    category:   document.getElementById('fbCategory').value,
+    name:       document.getElementById('fbName').value.trim() || null,
+    email:      document.getElementById('fbEmail').value.trim() || null,
+    message:    msg,
+    user_id:    currentUser?.id || null
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Send Feedback';
+
+  if (error) {
+    errEl.textContent = 'Something went wrong. Please try again.';
+    errEl.classList.remove('hidden');
+  } else {
+    okEl.classList.remove('hidden');
+    document.getElementById('fbMessage').value = '';
+    document.getElementById('fbName').value    = '';
+    document.getElementById('fbEmail').value   = '';
+    setTimeout(() => closeModal('feedbackModal'), 2200);
+  }
+}
+
 // ── MEDIA VIEWER (brochures / articles) ───────────────────
 let _mediaImages = [];
 let _mediaIndex  = 0;
