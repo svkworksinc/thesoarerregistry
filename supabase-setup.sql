@@ -177,5 +177,23 @@ CREATE POLICY "storage_delete" ON storage.objects
   );
 
 -- ================================================================
+-- MIGRATION — add columns introduced in the redesign
+-- Safe to run on an existing database (IF NOT EXISTS / IF NOT EXISTS guard)
+-- ================================================================
+
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS interior_color    TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS interior_material TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant             TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS body_shape        TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS gear_shift        TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS fuel_system       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS grade             TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS market            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS destination       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS trim_code         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS title_status      TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS verification      TEXT;
+
+-- ================================================================
 -- SETUP COMPLETE — return to config.js and fill in your credentials
 -- ================================================================
