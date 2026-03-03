@@ -197,3 +197,26 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS verification      TEXT;
 -- ================================================================
 -- SETUP COMPLETE — return to config.js and fill in your credentials
 -- ================================================================
+
+-- ── FEEDBACK TABLE ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS feedback (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  category   TEXT NOT NULL DEFAULT 'other',
+  name       TEXT,
+  email      TEXT,
+  message    TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (including anonymous) can submit feedback
+DROP POLICY IF EXISTS "feedback_insert" ON feedback;
+CREATE POLICY "feedback_insert" ON feedback FOR INSERT WITH CHECK (true);
+
+-- Only admins can read feedback (check profiles.is_admin)
+DROP POLICY IF EXISTS "feedback_select" ON feedback;
+CREATE POLICY "feedback_select" ON feedback FOR SELECT
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));

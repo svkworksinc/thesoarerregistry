@@ -6,6 +6,7 @@
   <title>The Soarer Registry — Global Chassis Database</title>
   <meta name="description" content="Documenting every Toyota Soarer and Lexus SC in existence. One car. One record. Forever." />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
@@ -98,7 +99,7 @@
             <option value="Z40">Z40 / SC430</option>
           </select>
           <select id="regFilterTrans" class="toolbar-select">
-            <option value="">Transmission</option>
+            <option value="">Transmission Type</option>
             <option value="Automatic">Automatic</option>
             <option value="Manual">Manual</option>
           </select>
@@ -235,7 +236,7 @@
             <div class="form-group">
               <label for="f-month">Mfg. Month</label>
               <select id="f-month">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="1">January</option><option value="2">February</option>
                 <option value="3">March</option><option value="4">April</option>
                 <option value="5">May</option><option value="6">June</option>
@@ -251,10 +252,9 @@
             <div class="form-group">
               <label for="f-body">Body</label>
               <select id="f-body">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="Hardtop">Hardtop</option>
                 <option value="Sunroof">Sunroof</option>
-                <option value="Targa">Targa / Removable Roof Panel</option>
                 <option value="Aerocabin">Aerocabin (Z20)</option>
                 <option value="Convertible">Retractable Hardtop (Z40)</option>
               </select>
@@ -262,7 +262,7 @@
             <div class="form-group">
               <label for="f-body-shape">Body Shape</label>
               <select id="f-body-shape">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="2-door Coupe">2-door Coupe</option>
                 <option value="2-door Convertible">2-door Convertible</option>
               </select>
@@ -277,38 +277,32 @@
             <div class="form-group">
               <label for="f-engine">Engine</label>
               <select id="f-engine">
-                <option value="">Unknown / Other</option>
+                <option value="">-</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="f-transmission">Transmission</label>
+              <label for="f-transmission">Transmission Type</label>
               <select id="f-transmission">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="Automatic">Automatic</option>
                 <option value="Manual">Manual</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="f-gear-shift">Gear Shift</label>
+              <label for="f-gear-shift">Transmission</label>
               <select id="f-gear-shift">
-                <option value="">Unknown</option>
-                <option value="Floor">Floor</option>
-                <option value="Column">Column</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="f-fuel-system">Fuel System</label>
-              <select id="f-fuel-system">
-                <option value="">Unknown</option>
-                <option value="EFI">EFI (Electronic Fuel Injection)</option>
-                <option value="Carburettor">Carburettor</option>
-                <option value="Twin Turbo EFI">Twin Turbo EFI</option>
+                <option value="">-</option>
+                <option value="R154">R154</option>
+                <option value="W58">W58</option>
+                <option value="A340E">A340E</option>
+                <option value="A650e">A650e</option>
+                <option value="A761E">A761E</option>
               </select>
             </div>
             <div class="form-group">
               <label for="f-drive">Driver Position</label>
               <select id="f-drive">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="RHD">RHD (Right Hand Drive)</option>
                 <option value="LHD">LHD (Left Hand Drive)</option>
               </select>
@@ -327,7 +321,7 @@
             <div class="form-group">
               <label for="f-market">Market</label>
               <select id="f-market">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="Japan Domestic">Japan Domestic</option>
                 <option value="North America">North America</option>
                 <option value="Europe">Europe</option>
@@ -365,7 +359,7 @@
             <div class="form-group">
               <label for="f-interior-material">Interior Material</label>
               <select id="f-interior-material">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="Leather">Leather</option>
                 <option value="Velour">Velour</option>
                 <option value="Suede">Suede</option>
@@ -383,7 +377,7 @@
             <div class="form-group">
               <label for="f-title-status">Title Status</label>
               <select id="f-title-status">
-                <option value="">Unknown</option>
+                <option value="">-</option>
                 <option value="Clean">Clean</option>
                 <option value="Salvage">Salvage</option>
                 <option value="Rebuilt">Rebuilt</option>
@@ -555,7 +549,6 @@
               <li>SC300 &mdash; 2JZ-GE 3.0L NA</li>
               <li>SC400 &mdash; 1UZ-FE 4.0L V8</li>
               <li>Soarer 2.5GT-T &mdash; 1JZ-GTE</li>
-              <li>Soarer 2.5GT-T Four &mdash; AWD</li>
             </ul>
           </div>
           <div class="chassis-card">
@@ -649,12 +642,11 @@
             <div class="gen-badge">Z30</div>
             <div class="gen-years">1991 – 2000</div>
             <div class="gen-name">Third Generation — Lexus SC</div>
-            <p class="gen-desc">The Z30 marked Toyota's global ambitions. Sold internationally as the <strong>Lexus SC300 and SC400</strong>, it brought the Soarer to North America, Europe, and Australia for the first time. The SC400's 1UZ-FE V8 was praised as one of the smoothest engines ever built. Domestically, the 1JZ-GTE and its AWD sibling offered turbocharged performance.</p>
+            <p class="gen-desc">The Z30 marked Toyota's global ambitions. Sold internationally as the <strong>Lexus SC300 and SC400</strong>, it brought the Soarer to North America, Europe, and Australia for the first time. The SC400's 1UZ-FE V8 was praised as one of the smoothest engines ever built.</p>
             <ul class="gen-specs">
               <li>2JZ-GE — 3.0L NA 225 hp (SC300)</li>
               <li>1UZ-FE — 4.0L V8 250 hp (SC400)</li>
               <li>1JZ-GTE — 2.5L Twin Turbo 280 hp</li>
-              <li>1JZ-GTE — 2.5L TT AWD (Four)</li>
             </ul>
             <div class="gen-fact">Voted Motor Trend Import Car of the Year in 1992.</div>
           </div>
@@ -939,9 +931,43 @@
         <input type="password" id="regPass" autocomplete="new-password" minlength="8" required />
       </div>
       <div id="regError" class="alert alert-error hidden"></div>
-      <button type="submit" class="btn btn-accent btn-block" style="margin-top:16px;">Create Account</button>
+      <button type="submit" id="regSubmitBtn" class="btn btn-accent btn-block" style="margin-top:16px;">Create Account</button>
     </form>
     <p class="modal-switch">Already a member? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in &rarr;</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════ FEEDBACK ═══════════════════ -->
+<div id="feedbackModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event,'feedbackModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('feedbackModal')">&times;</button>
+    <div class="modal-title">Send Feedback</div>
+    <form onsubmit="submitFeedback(event)">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="fbCategory">
+          <option value="suggestion">Suggestion</option>
+          <option value="bug">Bug Report</option>
+          <option value="content">Content / Data Issue</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Name <span class="form-optional">(optional)</span></label>
+        <input type="text" id="fbName" placeholder="e.g. John Smith" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email <span class="form-optional">(optional — if you'd like a reply)</span></label>
+        <input type="email" id="fbEmail" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message <span style="color:var(--danger)">*</span></label>
+        <textarea id="fbMessage" rows="5" placeholder="Tell us what's on your mind…" required></textarea>
+      </div>
+      <div id="fbError" class="form-error hidden"></div>
+      <div id="fbSuccess" class="form-success hidden">Thanks for your feedback! We'll review it shortly.</div>
+      <button type="submit" class="btn btn-accent" style="width:100%;margin-top:4px;" id="fbSubmitBtn">Send Feedback</button>
+    </form>
   </div>
 </div>
 
