@@ -304,6 +304,15 @@ textarea { resize: vertical; }
   padding: 90px 24px 80px;
   width: 100%;
 }
+.hero-text-block {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 36px 44px 40px;
+  max-width: 580px;
+}
 .hero-eyebrow {
   font-family: var(--font-head);
   font-size: 11px;
