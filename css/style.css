@@ -286,7 +286,8 @@ textarea { resize: vertical; }
   position: relative;
   min-height: 560px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: center;
   overflow: hidden;
   background-image: url('../img/containerbg.png');
   background-size: cover;
@@ -299,19 +300,27 @@ textarea { resize: vertical; }
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 90px 24px 80px;
   width: 100%;
+  padding: 0 24px 48px;
+  display: flex;
+  justify-content: center;
 }
 .hero-text-block {
-  display: inline-block;
-  background: rgba(0, 0, 0, 0.52);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-radius: 6px;
-  padding: 36px 44px 40px;
-  max-width: 580px;
+  padding: 28px 40px 32px;
+  max-width: 860px;
+  width: 100%;
+  text-align: center;
+}
+.hero-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 14px;
+  text-align: left;
 }
 .hero-eyebrow {
   font-family: var(--font-head);
@@ -347,10 +356,10 @@ textarea { resize: vertical; }
   font-size: 15px;
   color: var(--text);
   line-height: 1.75;
-  max-width: 480px;
-  margin-bottom: 36px;
+  flex: 1;
+  margin: 0;
 }
-.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
 
 /* GT-style corner brackets */
 .hero-corner-tl, .hero-corner-br {
@@ -390,18 +399,18 @@ textarea { resize: vertical; }
 .stat-block.stat-chassis { cursor: pointer; }
 .stat-block.stat-chassis:hover { background: var(--bg-4); }
 .stat-num {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  font-style: italic;
-  color: var(--accent-hi);
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: normal;
+  color: var(--white);
   line-height: 1;
 }
 .stat-lbl {
-  font-family: var(--font-head);
+  font-family: 'Poppins', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -420,7 +429,7 @@ textarea { resize: vertical; }
 .registry-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 20px 24px 80px;
 }
 
 /* Toolbar */
