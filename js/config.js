@@ -19,5 +19,5 @@
 //
 // ================================================================
 
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const SUPABASE_URL = 'https://tzckbyobobggzbtnkmty.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_kiOfAtkXTZrU-dc-fL1QmA_VKwA6X6x';
