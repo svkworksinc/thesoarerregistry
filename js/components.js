@@ -21,6 +21,7 @@ const NAVBAR_HTML = `
       <a href="#" onclick="showPage('home'); return false;">Home</a>
       <a href="#" onclick="scrollToRegistry(); return false;">Registry</a>
       <a href="#" onclick="showPage('submit'); return false;">Register</a>
+      <a href="#" onclick="showPage('library'); return false;">Library</a>
       <a href="#" onclick="showPage('about'); return false;">About</a>
     </div>
 
