@@ -49,12 +49,6 @@ const FOOTER_HTML = `
       <span class="footer-brand">THE SOARER REGISTRY</span>
       <span class="footer-tag">Global Chassis Database &bull; Est. 1981</span>
     </div>
-    <nav class="footer-nav">
-      <a href="#" onclick="showPage('home'); return false;">Home</a>
-      <a href="#" onclick="scrollToRegistry(); return false;">Registry</a>
-      <a href="#" onclick="showPage('submit'); return false;">Register</a>
-      <a href="#" onclick="showPage('about'); return false;">About</a>
-    </nav>
     <div class="footer-right">
       <span class="footer-copy">&copy; 2025 The Soarer Registry</span>
       <span class="footer-disc">Not affiliated with Toyota Motor Corporation or Lexus.</span>
