@@ -217,7 +217,10 @@ async function doLogin(e) {
 }
 
 async function logout() {
-  await db.auth.signOut();
+  try { await db.auth.signOut(); } catch (_) {}
+  currentUser = null;
+  updateNavForUser();
+  registryPage = 1;
   showPage('home');
 }
 
@@ -256,7 +259,7 @@ async function fetchCars({
   const offset = (page - 1) * limit;
 
   let query = db.from('cars')
-    .select('*, profiles:user_id(username, display_name)', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 

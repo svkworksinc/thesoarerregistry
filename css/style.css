@@ -284,14 +284,14 @@ textarea { resize: vertical; }
 ══════════════════════════════════════════ */
 .hero {
   position: relative;
-  min-height: 420px;
+  min-height: 600px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   background-image: url('../img/containerbg.png');
   background-size: cover;
-  background-position: center 65%;
+  background-position: center 85%;
   background-color: var(--bg);
 }
 
