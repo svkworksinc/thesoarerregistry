@@ -763,7 +763,7 @@ function updateModelOptions() {
 
   modelSel.innerHTML  = '<option value="">Select model&hellip;</option>' +
     models.map(m => `<option value="${escAttr(m)}">${escHtml(m)}</option>`).join('');
-  engineSel.innerHTML = '<option value=""></option>' +
+  engineSel.innerHTML = '<option value="">-</option>' +
     engines.map(e => `<option value="${escAttr(e)}">${escHtml(e)}</option>`).join('');
 }
 
@@ -1004,7 +1004,7 @@ function resetForm() {
   const modelSel  = document.getElementById('f-model');
   const engineSel = document.getElementById('f-engine');
   if (modelSel)  modelSel.innerHTML  = '<option value="">Select chassis first&hellip;</option>';
-  if (engineSel) engineSel.innerHTML = '<option value=""></option>';
+  if (engineSel) engineSel.innerHTML = '<option value="">-</option>';
 }
 
 function cancelEdit() {
