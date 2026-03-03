@@ -29,6 +29,8 @@ let lightboxImages = [];
 let lightboxIndex  = 0;
 let pendingFiles   = [];
 let registryPage   = 1;
+let vinSearchTimeout = null;
+let selectedVinEntry = null;
 
 // ── SHARED HELPERS ────────────────────────────────────────
 /** Returns "Jan 1994" or "1994" or "" */
@@ -64,6 +66,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   Promise.all([loadStats(), loadRegistryTable(1)]);
   setupDragDrop();
   handleHashNav();
+
+  // Close VIN search dropdown on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.vin-search-wrap')) {
+      const el = document.getElementById('vinSearchResults');
+      if (el) el.classList.add('hidden');
+    }
+  });
 });
 
 window.addEventListener('hashchange', handleHashNav);
@@ -99,6 +109,7 @@ function showPage(name) {
   if (target === 'home') loadRegistryTable(registryPage);
   if (name === 'profile') loadProfile();
   if (name === 'submit')  { resetForm(); updateSubmitNotice(); }
+  if (name === 'admin')   loadAdminPanel();
   if (name !== 'car')     window.location.hash = '';
 }
 
@@ -129,6 +140,7 @@ function updateNavForUser() {
   const navUser = document.getElementById('navUser');
   if (!navAuth || !navUser) return;
 
+  const adminLink = document.getElementById('navAdminLink');
   if (currentUser) {
     navAuth.classList.add('hidden');
     navUser.classList.remove('hidden');
@@ -136,9 +148,11 @@ function updateNavForUser() {
       || currentUser.profile?.username
       || currentUser.email;
     document.getElementById('navUsername').textContent = name;
+    if (adminLink) adminLink.classList.toggle('hidden', !currentUser.profile?.is_admin);
   } else {
     navAuth.classList.remove('hidden');
     navUser.classList.add('hidden');
+    if (adminLink) adminLink.classList.add('hidden');
   }
 }
 
@@ -753,6 +767,116 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement?.id === 'regSearchInput') applyHomeFilters();
 });
 
+// ── VIN DIRECTORY SEARCH ──────────────────────────────────
+
+function onVinSearchInput() {
+  clearTimeout(vinSearchTimeout);
+  const q = document.getElementById('f-vin-search').value.trim().toUpperCase();
+  if (q.length < 2) {
+    document.getElementById('vinSearchResults').classList.add('hidden');
+    return;
+  }
+  vinSearchTimeout = setTimeout(() => searchVinDirectory(q), 300);
+}
+
+async function searchVinDirectory(q) {
+  const resultsEl = document.getElementById('vinSearchResults');
+
+  const { data: vins } = await db.from('vin_directory')
+    .select('*').ilike('vin', `%${q}%`).order('vin').limit(10);
+
+  if (!vins || !vins.length) {
+    resultsEl.innerHTML = '<div class="vin-result-empty">No matching VINs in directory — you can still enter it manually below.</div>';
+    resultsEl.classList.remove('hidden');
+    return;
+  }
+
+  // Check which are already registered
+  const vinValues = vins.map(v => v.vin);
+  const { data: registered } = await db.from('cars')
+    .select('vin, current_owner_name, user_id')
+    .in('vin', vinValues).eq('status', 'active');
+  const regMap = {};
+  (registered || []).forEach(r => { regMap[r.vin] = r; });
+
+  resultsEl.innerHTML = vins.map(v => {
+    const reg   = regMap[v.vin];
+    const isOwn = reg && currentUser && reg.user_id === currentUser.id;
+    const badge = reg
+      ? (isOwn
+        ? '<span class="vin-badge vin-yours">Your car</span>'
+        : '<span class="vin-badge vin-taken">Registered</span>')
+      : '<span class="vin-badge vin-available">Available</span>';
+    const detail = [v.chassis, v.model, v.mfg_year, v.color].filter(Boolean).join(' · ');
+    return `<div class="vin-result-item" onclick="selectVinEntry(${v.id})">
+      <div class="vin-result-main">
+        <span class="vin-result-vin">${escHtml(v.vin)}</span>${badge}
+      </div>
+      ${detail ? `<div class="vin-result-detail">${escHtml(detail)}</div>` : ''}
+    </div>`;
+  }).join('');
+  resultsEl.classList.remove('hidden');
+}
+
+async function selectVinEntry(vinId) {
+  const { data: entry } = await db.from('vin_directory')
+    .select('*').eq('id', vinId).single();
+  if (!entry) return;
+
+  selectedVinEntry = entry;
+  document.getElementById('vinSearchResults').classList.add('hidden');
+  document.getElementById('f-vin-search').value = entry.vin;
+  document.getElementById('vinClearBtn').classList.remove('hidden');
+
+  // Auto-fill form fields
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  set('f-vin',   entry.vin);
+  set('f-frame', entry.frame_number);
+
+  if (entry.chassis) {
+    document.getElementById('f-chassis').value = entry.chassis;
+    updateModelOptions();
+  }
+  set('f-model',        entry.model);
+  set('f-engine',       entry.engine);
+  set('f-year',         entry.mfg_year);
+  set('f-month',        entry.mfg_month);
+  set('f-transmission', entry.transmission);
+  set('f-color',        entry.color);
+  set('f-color-code',   entry.color_code);
+
+  // Show verified status
+  const statusEl = document.getElementById('vinStatus');
+  statusEl.innerHTML = '<span class="vin-verified">Verified VIN — details auto-filled from directory</span>';
+  statusEl.classList.remove('hidden');
+  markAutoFilled(true);
+}
+
+function clearVinSelection() {
+  selectedVinEntry = null;
+  document.getElementById('f-vin-search').value = '';
+  document.getElementById('vinClearBtn').classList.add('hidden');
+  document.getElementById('vinStatus').classList.add('hidden');
+  document.getElementById('vinSearchResults').classList.add('hidden');
+  markAutoFilled(false);
+}
+
+function markAutoFilled(filled) {
+  const ids = ['f-vin', 'f-frame', 'f-year', 'f-color', 'f-color-code'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.toggle('auto-filled', filled && !!el.value);
+      if (el.tagName === 'INPUT') el.readOnly = filled && !!el.value;
+    }
+  });
+  // For selects: toggle CSS class only (readOnly not supported)
+  ['f-month', 'f-transmission'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('auto-filled', filled && !!el.value);
+  });
+}
+
 // ── FORM: SUBMIT / EDIT CAR ───────────────────────────────
 function updateModelOptions() {
   const chassis   = document.getElementById('f-chassis').value;
@@ -1005,6 +1129,7 @@ function resetForm() {
   const engineSel = document.getElementById('f-engine');
   if (modelSel)  modelSel.innerHTML  = '<option value="">Select chassis first&hellip;</option>';
   if (engineSel) engineSel.innerHTML = '<option value="">-</option>';
+  clearVinSelection();
 }
 
 function cancelEdit() {
@@ -1153,4 +1278,303 @@ function escAttr(str) {
 function formatDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+
+let adminCarsPage = 1;
+const ADMIN_PAGE_SIZE = 30;
+
+function loadAdminPanel() {
+  if (!currentUser?.profile?.is_admin) { showPage('home'); return; }
+  switchAdminTab('cars');
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('#adminTabBar .admin-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+  const el = document.getElementById(`adminTab-${tab}`);
+  if (el) el.classList.remove('hidden');
+  if (tab === 'cars')     loadAdminCars(1);
+  if (tab === 'users')    loadAdminUsers();
+  if (tab === 'feedback') loadAdminFeedback();
+  if (tab === 'vins')     loadAdminVins();
+}
+
+async function loadAdminCars(page = 1) {
+  adminCarsPage = page;
+  const statusFilter = document.getElementById('adminCarStatusFilter')?.value || '';
+  const searchTerm   = document.getElementById('adminCarSearch')?.value.trim() || '';
+
+  let query = db.from('cars').select('*', { count: 'exact' });
+  if (statusFilter) query = query.eq('status', statusFilter);
+  if (searchTerm)   query = query.or(
+    `vin.ilike.%${searchTerm}%,frame_number.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%,chassis.ilike.%${searchTerm}%`
+  );
+  query = query.order('created_at', { ascending: false });
+  const from = (page - 1) * ADMIN_PAGE_SIZE;
+  query = query.range(from, from + ADMIN_PAGE_SIZE - 1);
+
+  const { data: cars, count, error } = await query;
+  if (error) { document.getElementById('adminCarsBody').textContent = error.message; return; }
+
+  const userIds = [...new Set((cars || []).filter(c => c.user_id).map(c => c.user_id))];
+  let profileMap = {};
+  if (userIds.length) {
+    const { data: profs } = await db.from('profiles')
+      .select('id, username, display_name').in('id', userIds);
+    (profs || []).forEach(p => { profileMap[p.id] = p; });
+  }
+
+  renderAdminCarsTable(cars || [], profileMap, count || 0, page);
+}
+
+function renderAdminCarsTable(cars, profileMap, total, page) {
+  const body  = document.getElementById('adminCarsBody');
+  const pager = document.getElementById('adminCarsPager');
+  if (!cars.length) {
+    body.innerHTML = '<p class="admin-empty">No cars found.</p>';
+    pager.innerHTML = '';
+    return;
+  }
+
+  const statusOptions = ['active', 'pending', 'flagged', 'deleted'];
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>ID</th><th>Chassis</th><th>Model</th><th>VIN / Frame</th>
+          <th>Owner</th><th>Status</th><th>Registered</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${cars.map(c => {
+            const prof  = profileMap[c.user_id];
+            const owner = prof ? escHtml(prof.username) : '<span class="text-muted">—</span>';
+            const ident = escHtml(c.vin || c.frame_number || '—');
+            const opts  = statusOptions.map(s =>
+              `<option value="${s}"${c.status === s ? ' selected' : ''}>${s}</option>`
+            ).join('');
+            return `<tr>
+              <td class="admin-id">${c.id}</td>
+              <td><span class="tag ${chassisTagClass(c.chassis)}">${escHtml(c.chassis)}</span></td>
+              <td class="admin-model">${escHtml(c.model)}</td>
+              <td class="admin-mono">${ident}</td>
+              <td>${owner}</td>
+              <td><select class="admin-status-sel" onchange="adminSetCarStatus(${c.id}, this.value)">${opts}</select></td>
+              <td class="text-muted admin-nowrap">${formatDate(c.created_at)}</td>
+              <td class="admin-actions">
+                <button class="btn btn-ghost btn-xs" onclick="showCarDetail(${c.id})">View</button>
+                <button class="btn btn-danger btn-xs" onclick="adminDeleteCar(${c.id})">Delete</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  const totalPages = Math.ceil(total / ADMIN_PAGE_SIZE);
+  pager.innerHTML = totalPages <= 1 ? '' : `
+    <div class="pagination">
+      <span class="pager-info">${total} total &mdash; page ${page} of ${totalPages}</span>
+      <button class="page-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadAdminCars(${page - 1})">&#8249; Prev</button>
+      <button class="page-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadAdminCars(${page + 1})">Next &#8250;</button>
+    </div>`;
+}
+
+async function adminSetCarStatus(carId, status) {
+  const { error } = await db.from('cars').update({ status }).eq('id', carId);
+  if (error) alert('Error: ' + error.message);
+}
+
+async function adminDeleteCar(carId) {
+  if (!confirm(`Permanently delete car #${carId}? This cannot be undone.`)) return;
+  const { error } = await db.from('cars').delete().eq('id', carId);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadAdminCars(adminCarsPage);
+}
+
+async function loadAdminUsers() {
+  const { data: users, error } = await db.from('profiles')
+    .select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('adminUsersBody').textContent = error.message; return; }
+  renderAdminUsersTable(users || []);
+}
+
+function renderAdminUsersTable(users) {
+  const body = document.getElementById('adminUsersBody');
+  if (!users.length) { body.innerHTML = '<p class="admin-empty">No users found.</p>'; return; }
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Username</th><th>Display Name</th><th>Email</th>
+          <th>Location</th><th>Joined</th><th>Admin</th>
+        </tr></thead>
+        <tbody>
+          ${users.map(u => `<tr>
+            <td class="admin-mono">${escHtml(u.username)}</td>
+            <td>${escHtml(u.display_name || '—')}</td>
+            <td class="text-muted">${escHtml(u.email || '—')}</td>
+            <td class="text-muted">${escHtml(u.location || '—')}</td>
+            <td class="text-muted admin-nowrap">${formatDate(u.created_at)}</td>
+            <td>
+              <button class="btn btn-xs ${u.is_admin ? 'btn-accent' : 'btn-ghost'}"
+                onclick="adminToggleAdmin('${escAttr(u.id)}', ${u.is_admin})">
+                ${u.is_admin ? 'Admin ✓' : 'Make Admin'}
+              </button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function adminToggleAdmin(userId, currentIsAdmin) {
+  if (currentIsAdmin && userId === currentUser?.id) {
+    if (!confirm('Remove your own admin access?')) return;
+  }
+  const { error } = await db.from('profiles')
+    .update({ is_admin: !currentIsAdmin }).eq('id', userId);
+  if (error) { alert('Error: ' + error.message); return; }
+  if (userId === currentUser?.id) {
+    currentUser.profile.is_admin = !currentIsAdmin;
+    updateNavForUser();
+  }
+  loadAdminUsers();
+}
+
+async function loadAdminFeedback() {
+  const { data: items, error } = await db.from('feedback')
+    .select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('adminFeedbackBody').textContent = error.message; return; }
+  renderAdminFeedbackTable(items || []);
+}
+
+function renderAdminFeedbackTable(items) {
+  const body = document.getElementById('adminFeedbackBody');
+  if (!items.length) { body.innerHTML = '<p class="admin-empty">No feedback yet.</p>'; return; }
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Date</th><th>Category</th><th>Name</th><th>Email</th><th>Message</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(f => `<tr>
+            <td class="text-muted admin-nowrap">${formatDate(f.created_at)}</td>
+            <td><span class="admin-cat">${escHtml(f.category)}</span></td>
+            <td>${escHtml(f.name || '—')}</td>
+            <td class="text-muted">${escHtml(f.email || '—')}</td>
+            <td class="admin-msg">${escHtml(f.message)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── ADMIN: VIN DIRECTORY ──────────────────────────────────
+
+async function loadAdminVins() {
+  const q = document.getElementById('adminVinSearch')?.value.trim() || '';
+  let query = db.from('vin_directory').select('*', { count: 'exact' });
+  if (q) query = query.ilike('vin', `%${q}%`);
+  query = query.order('vin').limit(200);
+
+  const { data: vins, count, error } = await query;
+  if (error) { document.getElementById('adminVinsBody').textContent = error.message; return; }
+  renderAdminVinsTable(vins || [], count || 0);
+}
+
+function renderAdminVinsTable(vins, total) {
+  const body = document.getElementById('adminVinsBody');
+  if (!vins.length) {
+    body.innerHTML = '<p class="admin-empty">No VINs in directory yet. Use "+ Add VIN" above to start building the list.</p>';
+    return;
+  }
+
+  body.innerHTML = `
+    <p class="admin-count">${total} VIN${total !== 1 ? 's' : ''} in directory</p>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>VIN</th><th>Frame</th><th>Chassis</th><th>Model</th>
+          <th>Year</th><th>Engine</th><th>Trans</th><th>Color</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${vins.map(v => `<tr>
+            <td class="admin-mono">${escHtml(v.vin)}</td>
+            <td class="admin-mono">${escHtml(v.frame_number || '—')}</td>
+            <td>${v.chassis ? `<span class="tag ${chassisTagClass(v.chassis)}">${escHtml(v.chassis)}</span>` : '—'}</td>
+            <td>${escHtml(v.model || '—')}</td>
+            <td class="text-muted">${v.mfg_year || '—'}</td>
+            <td class="text-muted">${escHtml(v.engine || '—')}</td>
+            <td class="text-muted">${escHtml(v.transmission || '—')}</td>
+            <td class="text-muted">${escHtml(v.color || '—')}</td>
+            <td><button class="btn btn-danger btn-xs" onclick="adminDeleteVin(${v.id})">Delete</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function showAddVinForm() {
+  document.getElementById('adminAddVinForm').classList.remove('hidden');
+}
+
+function hideAddVinForm() {
+  document.getElementById('adminAddVinForm').classList.add('hidden');
+  document.getElementById('adminVinError').classList.add('hidden');
+}
+
+async function adminAddVin() {
+  const errEl = document.getElementById('adminVinError');
+  errEl.classList.add('hidden');
+
+  const get = id => document.getElementById(id)?.value.trim() || '';
+  const vin = get('av-vin').toUpperCase();
+  if (!vin) {
+    errEl.textContent = 'VIN is required.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const entry = {
+    vin,
+    frame_number: get('av-frame').toUpperCase() || null,
+    chassis:      get('av-chassis') || null,
+    model:        get('av-model') || null,
+    mfg_year:     parseInt(get('av-year')) || null,
+    mfg_month:    parseInt(get('av-month')) || null,
+    engine:       get('av-engine') || null,
+    transmission: get('av-transmission') || null,
+    color:        get('av-color') || null,
+    color_code:   get('av-color-code') || null,
+  };
+
+  const { error } = await db.from('vin_directory').insert(entry);
+  if (error) {
+    errEl.textContent = error.message.includes('duplicate')
+      ? 'This VIN already exists in the directory.'
+      : error.message;
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  hideAddVinForm();
+  ['av-vin','av-frame','av-chassis','av-model','av-year','av-month',
+   'av-engine','av-transmission','av-color','av-color-code']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  loadAdminVins();
+}
+
+async function adminDeleteVin(vinId) {
+  if (!confirm('Remove this VIN from the directory?')) return;
+  const { error } = await db.from('vin_directory').delete().eq('id', vinId);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadAdminVins();
 }
