@@ -2164,3 +2164,152 @@ textarea { resize: vertical; }
 /* Pager reuse */
 .admin-pager { margin-top: 20px; }
 .pager-info  { font-size: 13px; color: var(--text-muted); }
+.admin-count { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+
+/* Admin add-VIN form */
+.admin-add-form {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* ══════════════════════════════════════════
+   VIN DIRECTORY SEARCH (Registration Form)
+══════════════════════════════════════════ */
+
+.vin-search-wrap {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.vin-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vin-search-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  padding: 10px 38px 10px 14px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: border-color var(--trans), box-shadow var(--trans);
+}
+.vin-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-lo);
+}
+.vin-search-input::placeholder {
+  text-transform: none;
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+.vin-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-5);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vin-clear-btn:hover { color: var(--white); border-color: var(--accent); }
+
+/* Dropdown results */
+.vin-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg-3);
+  border: 1px solid var(--accent);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.vin-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-lo);
+  transition: background var(--trans);
+}
+.vin-result-item:last-child { border-bottom: none; }
+.vin-result-item:hover { background: var(--bg-5); }
+
+.vin-result-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vin-result-vin {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+.vin-result-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.vin-result-empty {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Status badges */
+.vin-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vin-available { background: rgba(48,160,96,0.15); color: var(--success); border: 1px solid rgba(48,160,96,0.3); }
+.vin-taken     { background: rgba(208,64,64,0.12); color: var(--danger);  border: 1px solid rgba(208,64,64,0.25); }
+.vin-yours     { background: var(--accent-lo);      color: var(--accent-hi); border: 1px solid rgba(80,144,248,0.25); }
+
+/* Verified status below search */
+.vin-status { margin-top: 8px; }
+.vin-verified {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success);
+  padding: 4px 12px;
+  background: rgba(48,160,96,0.1);
+  border: 1px solid rgba(48,160,96,0.25);
+  border-radius: var(--radius);
+}
+
+/* Auto-filled indicator on form fields */
+.auto-filled {
+  border-color: var(--success) !important;
+  background: rgba(48,160,96,0.06) !important;
+}

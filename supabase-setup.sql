@@ -265,3 +265,41 @@ CREATE POLICY "images_delete_admin" ON car_images FOR DELETE
 --   UPDATE profiles SET is_admin = true WHERE username = 'your_username';
 --
 -- ──────────────────────────────────────────────────────────────────────────────
+
+-- ── VIN DIRECTORY TABLE ─────────────────────────────────────────────────────
+-- Master list of known Soarer / SC VINs. Users search this list when
+-- registering a car; matching entries auto-fill chassis details.
+
+CREATE TABLE IF NOT EXISTS vin_directory (
+  id           BIGSERIAL PRIMARY KEY,
+  vin          TEXT UNIQUE NOT NULL,
+  frame_number TEXT,
+  chassis      TEXT,
+  model        TEXT,
+  mfg_year     INTEGER,
+  mfg_month    INTEGER,
+  engine       TEXT,
+  transmission TEXT,
+  color        TEXT,
+  color_code   TEXT,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE vin_directory ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_vin_dir_vin ON vin_directory(vin);
+
+-- Everyone can search
+DROP POLICY IF EXISTS "vin_dir_select" ON vin_directory;
+CREATE POLICY "vin_dir_select" ON vin_directory FOR SELECT USING (true);
+
+-- Only admins can manage the directory
+DROP POLICY IF EXISTS "vin_dir_insert" ON vin_directory;
+DROP POLICY IF EXISTS "vin_dir_update" ON vin_directory;
+DROP POLICY IF EXISTS "vin_dir_delete" ON vin_directory;
+CREATE POLICY "vin_dir_insert" ON vin_directory FOR INSERT TO authenticated
+  WITH CHECK (is_admin());
+CREATE POLICY "vin_dir_update" ON vin_directory FOR UPDATE
+  USING (is_admin());
+CREATE POLICY "vin_dir_delete" ON vin_directory FOR DELETE
+  USING (is_admin());
