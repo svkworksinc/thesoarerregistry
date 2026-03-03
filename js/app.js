@@ -10,17 +10,17 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const ENGINES = {
-  Z10: ['1G-EU (2.0L I6)', '1G-GEU (2.0L DOHC I6)', '5M-GEU (2.8L I6)', '6M-GEU (3.0L I6)', 'Other'],
-  Z20: ['1G-GEU (2.0L DOHC)', '1G-GTEU (2.0L Twin Turbo)', '7M-GEU (3.0L DOHC)', '7M-GTEU (3.0L Twin Turbo)', 'Other'],
-  Z30: ['2JZ-GE (3.0L NA)', '1UZ-FE (4.0L V8)', '1JZ-GTE (2.5L Twin Turbo)', '1JZ-GTE (2.5L TT AWD)', 'Other'],
-  Z40: ['3UZ-FE (4.3L V8)', 'Other']
+  Z10: ['1G-EU (2.0L I6)', '1G-GEU (2.0L  I6)',  'M-TEU (2.0L I6)','5M-GEU (2.8L I6)', '6M-GEU (3.0L I6)'],
+  Z20: ['1G-GEU (2.0L)', '1G-FE (2.0L)', '1G-GTE (2.0L Twin Turbo)', '7M-GTEU (3.0L Twin Turbo)'],
+  Z30: ['2JZ-GE (3.0L NA)', '1UZ-FE (4.0L V8)', '1JZ-GTE (2.5L Twin Turbo)'],
+  Z40: ['3UZ-FE (4.3L V8)']
 };
 
 const MODELS = {
   Z10: ['Soarer 2000GT', 'Soarer 2000GT-Extra', 'Soarer 2800GT', 'Soarer 2800GT Extra', 'Soarer 3000GT', 'Other'],
-  Z20: ['Soarer 2.0GT', 'Soarer 2.0GT-Twin Turbo', 'Soarer 2.0GT-Twin Turbo L', 'Soarer 3.0GT', 'Soarer 3.0GT-Limited', 'Soarer 3.0GT-Twin Turbo', 'Other'],
-  Z30: ['SC300', 'SC400', 'Soarer 3.0GT (2JZ-GE)', 'Soarer 4.0GT (1UZ-FE)', 'Soarer 2.5GT-T (1JZ-GTE)', 'Soarer 2.5GT-T Four (AWD)', 'Other'],
-  Z40: ['SC430', 'Other']
+  Z20: ['Soarer 2.0GT', 'Soarer 2.0GT-Twin Turbo', 'Soarer 2.0GT-Twin Turbo L', 'Soarer 3.0GT', 'Soarer 3.0GT-Limited', 'Soarer 3.0GT-Twin Turbo'],
+  Z30: ['SC300', 'SC400', 'Soarer 3.0GT (2JZ-GE)', 'Soarer 4.0GT (1UZ-FE)', 'Soarer 2.5GT-T (1JZ-GTE)'],
+  Z40: ['SC430', 'Soarer UZZ40']
 };
 
 // ── STATE ─────────────────────────────────────────────────
@@ -528,8 +528,8 @@ function renderCarDetail(car) {
         <div class="info-panel">
           <div class="info-panel-title">Specification</div>
           ${row('Engine', car.engine)}
-          ${row('Transmission', car.transmission)}
-          ${row('Gear Shift', car.gear_shift)}
+          ${row('Transmission Type', car.transmission)}
+          ${row('Transmission', car.gearbox)}
           ${row('Fuel System', car.fuel_system)}
           ${row('Driver Position', car.drive_side)}
         </div>
