@@ -35,10 +35,10 @@
   --col-engine:  #e8a030;
   --col-owner:   #40d090;
 
-  /* Space Grotesk: geometric, readable, still technical */
-  --font-head:   'Space Grotesk', sans-serif;
-  --font-display:'Orbitron', sans-serif;
-  --font-body:   'Space Grotesk', sans-serif;
+  /* Luxury pairing: Playfair Display (editorial serif) + Lato (clean sans) */
+  --font-head:   'Lato', sans-serif;
+  --font-display:'Playfair Display', serif;
+  --font-body:   'Lato', sans-serif;
   --font-mono:   'JetBrains Mono', 'Consolas', monospace;
 
   --radius:      4px;
@@ -214,17 +214,17 @@ textarea { resize: vertical; }
   height: 36px;
   background: var(--accent);
   color: var(--white);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 900;
   border-radius: 2px;
   flex-shrink: 0;
 }
 .nav-brand-text {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--white);
 }
 .nav-links {
@@ -284,50 +284,19 @@ textarea { resize: vertical; }
 ══════════════════════════════════════════ */
 .hero {
   position: relative;
-  min-height: 500px;
+  min-height: 560px;
   display: flex;
   align-items: center;
   overflow: hidden;
+  background-image: url('../img/containerbg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: var(--bg);
 }
 
-/*
-  To use a real background photo, add this class's background-image:
-  .hero-bg { background-image: url(img/hero.jpg); }
-*/
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(6, 6, 16, 0.96) 0%,
-      rgba(10, 14, 36, 0.9) 40%,
-      rgba(8, 18, 42, 0.88) 70%,
-      rgba(6, 6, 16, 0.95) 100%
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 79px,
-      rgba(74, 126, 194, 0.04) 79px,
-      rgba(74, 126, 194, 0.04) 80px
-    ),
-    linear-gradient(180deg, #060612 0%, #0d1628 50%, #060612 100%);
-  background-size: cover, auto, cover;
-}
-/* PSP-style CRT scanlines */
-.hero-scan-lines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0,0,0,0.12) 3px,
-    rgba(0,0,0,0.12) 4px
-  );
-  pointer-events: none;
-}
+.hero-bg { display: none; }
+.hero-scan-lines { display: none; }
 .hero-content {
   position: relative;
   z-index: 2;
@@ -339,8 +308,8 @@ textarea { resize: vertical; }
 .hero-eyebrow {
   font-family: var(--font-head);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   color: var(--accent-hi);
   text-transform: uppercase;
   margin-bottom: 18px;
@@ -357,12 +326,13 @@ textarea { resize: vertical; }
 }
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(36px, 7vw, 80px);
-  font-weight: 900;
-  line-height: 0.95;
-  letter-spacing: 0.02em;
+  font-size: clamp(40px, 7vw, 88px);
+  font-weight: 800;
+  font-style: italic;
+  line-height: 1.0;
+  letter-spacing: -0.01em;
   color: var(--white);
-  text-shadow: 0 0 80px rgba(74, 126, 194, 0.2);
+  text-shadow: 0 2px 40px rgba(20, 40, 80, 0.6);
   margin-bottom: 22px;
 }
 .hero-desc {
@@ -413,16 +383,17 @@ textarea { resize: vertical; }
 .stat-block.stat-chassis:hover { background: var(--bg-4); }
 .stat-num {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
+  font-style: italic;
   color: var(--accent-hi);
   line-height: 1;
 }
 .stat-lbl {
   font-family: var(--font-head);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -652,10 +623,11 @@ textarea { resize: vertical; }
   margin-bottom: 8px;
 }
 .page-header h1 {
-  font-family: var(--font-head);
-  font-size: 32px;
+  font-family: var(--font-display);
+  font-size: 34px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  font-style: italic;
+  letter-spacing: 0;
   color: var(--white);
   line-height: 1.1;
 }
@@ -802,20 +774,20 @@ textarea { resize: vertical; }
   border-radius: 50%;
   background: var(--accent);
   color: var(--white);
-  font-family: var(--font-display);
+  font-family: var(--font-head);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
 }
 .profile-cars-title {
-  font-family: var(--font-head);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: 0;
   color: var(--text-bright);
   margin-bottom: 18px;
 }
@@ -942,11 +914,11 @@ textarea { resize: vertical; }
   margin-bottom: 8px;
 }
 .car-detail-title {
-  font-family: var(--font-head);
+  font-family: var(--font-display);
   font-size: 30px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: 0;
   color: var(--white);
   line-height: 1.1;
 }
@@ -1111,11 +1083,12 @@ textarea { resize: vertical; }
 .chassis-z30 { border-color: rgba(74,126,194,.5); }
 .chassis-label {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
+  font-style: italic;
   color: var(--accent-hi);
   margin-bottom: 2px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .chassis-years {
   font-size: 10px;
@@ -1156,11 +1129,11 @@ textarea { resize: vertical; }
   box-shadow: 0 24px 60px rgba(0,0,0,.6);
 }
 .modal-title {
-  font-family: var(--font-head);
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: 0;
   color: var(--white);
   margin-bottom: 20px;
 }
@@ -1281,10 +1254,11 @@ textarea { resize: vertical; }
 }
 .footer-left { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .footer-brand {
-  font-family: var(--font-display);
+  font-family: var(--font-head);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--white);
 }
 .footer-tag { font-size: 11px; color: var(--text-muted); }
@@ -1294,10 +1268,91 @@ textarea { resize: vertical; }
 
 
 /* ══════════════════════════════════════════
+   CAR DETAIL — FULL-WIDTH SPEC LAYOUT
+══════════════════════════════════════════ */
+.car-detail-body {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+}
+
+.car-detail-year {
+  font-family: var(--font-head);
+  font-size: 0.5em;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--accent-hi);
+  margin-left: 20px;
+  vertical-align: middle;
+}
+
+.car-detail-gallery-full {
+  width: 100%;
+}
+
+.car-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+/* Ownership section */
+.car-ownership-section {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.ownership-section-title {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+.owner-cards { display: flex; flex-wrap: wrap; gap: 16px; }
+.owner-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: 260px;
+  max-width: 400px;
+}
+.owner-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.owner-info { min-width: 0; }
+.owner-name { font-weight: 700; color: var(--white); font-size: 14px; line-height: 1.2; }
+.owner-username { font-size: 12px; color: var(--accent-hi); margin-top: 2px; }
+.owner-meta { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.8; }
+
+/* Last-updated column */
+.td-updated { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+
+/* ══════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .car-detail-wrap { grid-template-columns: 1fr 320px; }
+  .car-spec-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
 
 @media (max-width: 900px) {
