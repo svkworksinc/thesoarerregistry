@@ -236,7 +236,7 @@
             <div class="form-group">
               <label for="f-month">Mfg. Month</label>
               <select id="f-month">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="1">January</option><option value="2">February</option>
                 <option value="3">March</option><option value="4">April</option>
                 <option value="5">May</option><option value="6">June</option>
@@ -252,7 +252,7 @@
             <div class="form-group">
               <label for="f-body">Body</label>
               <select id="f-body">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="Hardtop">Hardtop</option>
                 <option value="Sunroof">Sunroof</option>
                 <option value="Aerocabin">Aerocabin (Z20)</option>
@@ -262,7 +262,7 @@
             <div class="form-group">
               <label for="f-body-shape">Body Shape</label>
               <select id="f-body-shape">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="2-door Coupe">2-door Coupe</option>
                 <option value="2-door Convertible">2-door Convertible</option>
               </select>
@@ -277,13 +277,13 @@
             <div class="form-group">
               <label for="f-engine">Engine</label>
               <select id="f-engine">
-                <option value="">Unknown / Other</option>
+                <option value=""></option>
               </select>
             </div>
             <div class="form-group">
-              <label for="f-transmission">Transmission</label>
+              <label for="f-transmission">Transmission Type</label>
               <select id="f-transmission">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="Automatic">Automatic</option>
                 <option value="Manual">Manual</option>
               </select>
@@ -291,19 +291,18 @@
             <div class="form-group">
               <label for="f-gear-shift">Transmission</label>
               <select id="f-gear-shift">
-                <option value="">Unknown</option>
-                <option value="Floor">R154</option>
-                <option value="Column">W58</option>
-                <option value="Column">A340e</option>
-                <option value="Column">A650e</option>
-                <option value="Column">A761E</option>
-
+                <option value=""></option>
+                <option value="R154">R154</option>
+                <option value="W58">W58</option>
+                <option value="A340E">A340E</option>
+                <option value="A650e">A650e</option>
+                <option value="A761E">A761E</option>
               </select>
             </div>
             <div class="form-group">
               <label for="f-drive">Driver Position</label>
               <select id="f-drive">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="RHD">RHD (Right Hand Drive)</option>
                 <option value="LHD">LHD (Left Hand Drive)</option>
               </select>
@@ -322,7 +321,7 @@
             <div class="form-group">
               <label for="f-market">Market</label>
               <select id="f-market">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="Japan Domestic">Japan Domestic</option>
                 <option value="North America">North America</option>
                 <option value="Europe">Europe</option>
@@ -360,7 +359,7 @@
             <div class="form-group">
               <label for="f-interior-material">Interior Material</label>
               <select id="f-interior-material">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="Leather">Leather</option>
                 <option value="Velour">Velour</option>
                 <option value="Suede">Suede</option>
@@ -378,7 +377,7 @@
             <div class="form-group">
               <label for="f-title-status">Title Status</label>
               <select id="f-title-status">
-                <option value="">Unknown</option>
+                <option value=""></option>
                 <option value="Clean">Clean</option>
                 <option value="Salvage">Salvage</option>
                 <option value="Rebuilt">Rebuilt</option>
@@ -932,9 +931,43 @@
         <input type="password" id="regPass" autocomplete="new-password" minlength="8" required />
       </div>
       <div id="regError" class="alert alert-error hidden"></div>
-      <button type="submit" class="btn btn-accent btn-block" style="margin-top:16px;">Create Account</button>
+      <button type="submit" id="regSubmitBtn" class="btn btn-accent btn-block" style="margin-top:16px;">Create Account</button>
     </form>
     <p class="modal-switch">Already a member? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in &rarr;</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════ FEEDBACK ═══════════════════ -->
+<div id="feedbackModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event,'feedbackModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('feedbackModal')">&times;</button>
+    <div class="modal-title">Send Feedback</div>
+    <form onsubmit="submitFeedback(event)">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="fbCategory">
+          <option value="suggestion">Suggestion</option>
+          <option value="bug">Bug Report</option>
+          <option value="content">Content / Data Issue</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Name <span class="form-optional">(optional)</span></label>
+        <input type="text" id="fbName" placeholder="e.g. John Smith" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email <span class="form-optional">(optional — if you'd like a reply)</span></label>
+        <input type="email" id="fbEmail" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message <span style="color:var(--danger)">*</span></label>
+        <textarea id="fbMessage" rows="5" placeholder="Tell us what's on your mind…" required></textarea>
+      </div>
+      <div id="fbError" class="form-error hidden"></div>
+      <div id="fbSuccess" class="form-success hidden">Thanks for your feedback! We'll review it shortly.</div>
+      <button type="submit" class="btn btn-accent" style="width:100%;margin-top:4px;" id="fbSubmitBtn">Send Feedback</button>
+    </form>
   </div>
 </div>
 
