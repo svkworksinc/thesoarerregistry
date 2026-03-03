@@ -290,7 +290,7 @@ async function loadRegistryTable(page = 1) {
   const countEl = document.getElementById('registryResultCount');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="9" class="table-placeholder">Loading registry&hellip;</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="13" class="table-placeholder">Loading registry&hellip;</td></tr>';
 
   const filters = gatherHomeFilters();
   const res = await fetchCars({ ...filters, page });
@@ -302,7 +302,7 @@ async function loadRegistryTable(page = 1) {
   }
 
   if (!res.cars.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No cars found. Try adjusting your search.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="table-empty">No cars found. Try adjusting your search.</td></tr>';
     document.getElementById('registryPagination').innerHTML = '';
     return;
   }
@@ -347,11 +347,9 @@ function carRowHTML(car, index) {
     ? `<img src="${escAttr(car.primary_image_url)}" alt="${escAttr(car.model)}" loading="lazy" />`
     : '<span class="no-thumb">—</span>';
 
-  const engine = car.engine ? car.engine.split('(')[0].trim() : '—';
-  const owner  = car.profiles?.display_name
-    || car.profiles?.username
-    || car.current_owner_name
-    || '—';
+  const engine  = car.engine ? car.engine.split('(')[0].trim() : '—';
+  const owner   = car.profiles?.display_name || car.profiles?.username || car.current_owner_name || '—';
+  const updated = car.updated_at ? formatDate(car.updated_at) : (car.created_at ? formatDate(car.created_at) : '—');
 
   return `
     <tr class="registry-row" onclick="showCarDetail(${car.id})">
@@ -362,8 +360,12 @@ function carRowHTML(car, index) {
       <td class="td-year">${car.mfg_year || '—'}</td>
       <td class="td-engine">${escHtml(engine)}</td>
       <td>${car.color ? escHtml(car.color) : '—'}</td>
+      <td>${car.interior_color ? escHtml(car.interior_color) : '—'}</td>
+      <td>${car.interior_material ? escHtml(car.interior_material) : '—'}</td>
+      <td>${car.transmission ? escHtml(car.transmission) : '—'}</td>
       <td>${car.country ? escHtml(car.country) : '—'}</td>
       <td class="td-owner">${escHtml(owner)}</td>
+      <td class="td-updated">${updated}</td>
     </tr>`;
 }
 
@@ -445,16 +447,17 @@ function renderCarDetail(car) {
 
   const isOwner = currentUser && car.user_id === currentUser.id;
   const year    = formatYear(car.mfg_year, car.mfg_month);
+  const profiles = car.profiles || {};
 
   const mainImg = images.length
     ? `<img id="galleryMain" src="${escAttr(images[0].public_url)}" alt="${escAttr(car.model)}" onclick="openLightbox(0)" />`
     : `<div class="no-photo">&#128247;<span style="font-size:15px;margin-top:10px;">No photos yet</span></div>`;
 
-  const thumbs = images.length > 1
-    ? images.map((img, i) => `
+  const thumbsHTML = images.length > 1
+    ? `<div class="gallery-thumbs">${images.map((img, i) => `
         <div class="gallery-thumb${i === 0 ? ' active' : ''}" id="thumb-${i}" onclick="selectImage(${i})">
           <img src="${escAttr(img.public_url)}" alt="Photo ${i + 1}" />
-        </div>`).join('')
+        </div>`).join('')}</div>`
     : '';
 
   const row = (label, value, mono = false) => {
@@ -465,89 +468,115 @@ function renderCarDetail(car) {
     </div>`;
   };
 
-  const profiles = car.profiles || {};
+  const ownerName = profiles.display_name || profiles.username || car.current_owner_name || null;
+  const ownerInitials = ownerName ? ownerName.slice(0, 2).toUpperCase() : '?';
 
   document.getElementById('carDetailContent').innerHTML = `
     <div class="car-detail-header">
       <div class="ph-inner">
         <div class="car-detail-breadcrumb">
           <a href="#" onclick="showPage('home')">Registry</a>
-          &rsaquo; ${escHtml(car.chassis)}
-          &rsaquo; ${escHtml(car.model)}
+          &rsaquo; ${escHtml(car.chassis)} &rsaquo; ${escHtml(car.model)}
         </div>
         <span class="chassis-tag ${chassisTagClass(car.chassis)}" style="margin-bottom:10px;display:inline-block;">
           ${escHtml(car.chassis)}
         </span>
         <h1 class="car-detail-title">
-          ${escHtml(car.model)}${year ? `<span style="color:var(--accent-hi);font-weight:400;margin-left:16px;">${year}</span>` : ''}
+          ${escHtml(car.model)}${year ? `<span class="car-detail-year">${year}</span>` : ''}
         </h1>
         ${car.color ? `<div class="car-detail-subtitle">${escHtml(car.color)}${car.color_code ? ` &mdash; ${escHtml(car.color_code)}` : ''}</div>` : ''}
       </div>
     </div>
 
-    <div class="car-detail-wrap">
-      <div class="car-detail-gallery">
+    <div class="car-detail-body">
+
+      <div class="car-detail-gallery-full">
         <div class="gallery-main">${mainImg}</div>
-        ${thumbs ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
-        ${car.notes ? `<div class="notes-box"><h4>Notes</h4><p>${escHtml(car.notes)}</p></div>` : ''}
+        ${thumbsHTML}
       </div>
 
-      <div class="car-detail-info">
-        ${isOwner ? `
-          <div class="detail-actions">
-            <button class="btn btn-outline btn-sm" onclick="editCar(${car.id})">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteCar(${car.id})">Delete</button>
-          </div>` : ''}
+      ${isOwner ? `<div class="detail-actions" style="margin-top:16px;">
+        <button class="btn btn-outline btn-sm" onclick="editCar(${car.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCar(${car.id})">Delete</button>
+      </div>` : ''}
+
+      <div class="car-spec-grid">
 
         <div class="info-panel">
-          <div class="info-panel-title">Vehicle</div>
-          ${row('Chassis', car.chassis)}
+          <div class="info-panel-title">Identification</div>
+          ${row('Frame Number', car.frame_number, true)}
+          ${row('VIN', car.vin, true)}
           ${row('Model', car.model)}
-          ${car.trim ? row('Trim', car.trim) : ''}
-          ${row('Engine', car.engine)}
-          ${row('Transmission', car.transmission)}
-          ${row('Drive Side', car.drive_side)}
-          ${row('Body Type', car.body_type)}
+          ${row('Chassis', car.chassis)}
         </div>
 
         <div class="info-panel">
           <div class="info-panel-title">Production</div>
-          ${row('Year', car.mfg_year ? String(car.mfg_year) : null)}
-          ${row('Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
-          ${row('Exterior Color', car.color ? `${car.color}${car.color_code ? ` (${car.color_code})` : ''}` : null)}
-          ${car.interior_color ? row('Interior Color', car.interior_color) : ''}
+          ${row('Mfg. Year', car.mfg_year ? String(car.mfg_year) : null)}
+          ${row('Mfg. Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
+          ${row('Plant', car.plant)}
+          ${row('Body', car.body_type)}
+          ${row('Body Shape', car.body_shape)}
         </div>
 
         <div class="info-panel">
-          <div class="info-panel-title">Identity</div>
-          ${row('VIN', car.vin, true)}
-          ${row('Frame #', car.frame_number, true)}
+          <div class="info-panel-title">Specification</div>
+          ${row('Engine', car.engine)}
+          ${row('Transmission', car.transmission)}
+          ${row('Gear Shift', car.gear_shift)}
+          ${row('Fuel System', car.fuel_system)}
+          ${row('Driver Position', car.drive_side)}
         </div>
 
         <div class="info-panel">
-          <div class="info-panel-title">Location</div>
-          ${row('Country', car.country)}
-          ${row('Location', car.location)}
-          ${car.current_owner_name ? row('Owner', car.current_owner_name) : ''}
+          <div class="info-panel-title">Grade &amp; Market</div>
+          ${row('Grade', car.grade)}
+          ${row('Trim', car.trim)}
+          ${row('Market', car.market)}
+          ${row('Destination', car.destination)}
         </div>
 
-        ${profiles.username ? `
         <div class="info-panel">
-          <div class="info-panel-title">Registry</div>
-          <div class="info-row">
-            <span class="info-key">Registered by</span>
-            <span class="info-value">${escHtml(profiles.display_name || profiles.username)}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-key">Added</span>
-            <span class="info-value">${formatDate(car.created_at)}</span>
-          </div>
-        </div>` : ''}
+          <div class="info-panel-title">Appearance</div>
+          ${row('Exterior Color', car.color)}
+          ${row('Color Code', car.color_code, true)}
+          ${row('Trim Code', car.trim_code, true)}
+          ${row('Interior Color', car.interior_color)}
+          ${row('Interior Material', car.interior_material)}
+        </div>
 
-        <button class="btn btn-outline btn-block" onclick="showPage('home')" style="margin-top:4px;">
-          &larr; Back to Registry
-        </button>
+        <div class="info-panel">
+          <div class="info-panel-title">Status &amp; Location</div>
+          ${row('Title Status', car.title_status)}
+          ${row('Current Country', car.country)}
+          ${row('State / Region', car.location)}
+          ${row('Verification', car.verification)}
+        </div>
+
       </div>
+
+      ${car.notes ? `<div class="notes-box" style="margin-top:16px;"><h4>Notes</h4><p>${escHtml(car.notes)}</p></div>` : ''}
+
+      <div class="car-ownership-section">
+        <div class="ownership-section-title">Ownership &amp; Registry</div>
+        <div class="owner-cards">
+          <div class="owner-card">
+            <div class="owner-avatar">${ownerInitials}</div>
+            <div class="owner-info">
+              <div class="owner-name">${escHtml(ownerName || 'Anonymous')}</div>
+              ${profiles.username ? `<div class="owner-username">@${escHtml(profiles.username)}</div>` : ''}
+              <div class="owner-meta">
+                ${car.current_owner_name && car.current_owner_name !== ownerName
+                  ? `Listed owner: ${escHtml(car.current_owner_name)}<br>` : ''}
+                Registered ${formatDate(car.created_at)}
+                ${car.updated_at ? `<br>Last updated ${formatDate(car.updated_at)}` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-outline" onclick="showPage('home')" style="margin-top:24px;">&larr; Back to Registry</button>
     </div>`;
 }
 
@@ -637,22 +666,33 @@ async function submitCar(e) {
     user_id:            currentUser.id,
     chassis:            get('f-chassis'),
     model:              get('f-model'),
-    trim:               get('f-trim')          || null,
+    trim:               get('f-trim')               || null,
     vin:                rawVin,
     frame_number:       rawFrame,
-    mfg_year:           parseInt(get('f-year'))  || null,
-    mfg_month:          parseInt(get('f-month')) || null,
-    engine:             get('f-engine')        || null,
-    transmission:       get('f-transmission')  || null,
-    drive_side:         get('f-drive')         || null,
-    body_type:          get('f-body')          || null,
-    color:              get('f-color')         || null,
-    color_code:         get('f-color-code')    || null,
-    interior_color:     get('f-interior')      || null,
-    country:            get('f-country')       || null,
-    location:           get('f-location')      || null,
-    current_owner_name: get('f-owner')         || null,
-    notes:              get('f-notes')         || null,
+    mfg_year:           parseInt(get('f-year'))      || null,
+    mfg_month:          parseInt(get('f-month'))     || null,
+    plant:              get('f-plant')               || null,
+    body_type:          get('f-body')                || null,
+    body_shape:         get('f-body-shape')          || null,
+    engine:             get('f-engine')              || null,
+    transmission:       get('f-transmission')        || null,
+    gear_shift:         get('f-gear-shift')          || null,
+    fuel_system:        get('f-fuel-system')         || null,
+    drive_side:         get('f-drive')               || null,
+    grade:              get('f-grade')               || null,
+    market:             get('f-market')              || null,
+    destination:        get('f-destination')         || null,
+    color:              get('f-color')               || null,
+    color_code:         get('f-color-code')          || null,
+    trim_code:          get('f-trim-code')           || null,
+    interior_color:     get('f-interior')            || null,
+    interior_material:  get('f-interior-material')   || null,
+    title_status:       get('f-title-status')        || null,
+    verification:       get('f-verification')        || null,
+    country:            get('f-country')             || null,
+    location:           get('f-location')            || null,
+    current_owner_name: get('f-owner')               || null,
+    notes:              get('f-notes')               || null,
   };
 
   if (!carData.chassis || !carData.model) {
@@ -746,16 +786,23 @@ async function editCar(id) {
       const el = document.getElementById(elId);
       if (el) el.value = val || '';
     };
-    set('f-model',        car.model);        set('f-trim',         car.trim);
-    set('f-vin',          car.vin);          set('f-frame',        car.frame_number);
-    set('f-year',         car.mfg_year);     set('f-month',        car.mfg_month);
-    set('f-engine',       car.engine);       set('f-transmission', car.transmission);
-    set('f-drive',        car.drive_side);   set('f-body',         car.body_type);
-    set('f-color',        car.color);        set('f-color-code',   car.color_code);
-    set('f-interior',     car.interior_color);
-    set('f-country',      car.country);      set('f-location',     car.location);
-    set('f-owner',        car.current_owner_name);
-    set('f-notes',        car.notes);
+    set('f-model',              car.model);         set('f-trim',              car.trim);
+    set('f-vin',                car.vin);           set('f-frame',             car.frame_number);
+    set('f-year',               car.mfg_year);      set('f-month',             car.mfg_month);
+    set('f-plant',              car.plant);         set('f-body',              car.body_type);
+    set('f-body-shape',         car.body_shape);
+    set('f-engine',             car.engine);        set('f-transmission',      car.transmission);
+    set('f-gear-shift',         car.gear_shift);    set('f-fuel-system',       car.fuel_system);
+    set('f-drive',              car.drive_side);
+    set('f-grade',              car.grade);         set('f-market',            car.market);
+    set('f-destination',        car.destination);
+    set('f-color',              car.color);         set('f-color-code',        car.color_code);
+    set('f-trim-code',          car.trim_code);     set('f-interior',          car.interior_color);
+    set('f-interior-material',  car.interior_material);
+    set('f-title-status',       car.title_status);  set('f-verification',      car.verification);
+    set('f-country',            car.country);       set('f-location',          car.location);
+    set('f-owner',              car.current_owner_name);
+    set('f-notes',              car.notes);
 
     document.getElementById('submitBtn').textContent = 'Save Changes';
     const ph = document.querySelector('#page-submit h1');

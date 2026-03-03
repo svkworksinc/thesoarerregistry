@@ -14,7 +14,7 @@ const NAVBAR_HTML = `
         onerror="this.style.display='none';document.getElementById('nav-logo-fb').style.display='flex';"
       />
       <span class="nav-logo-fallback" id="nav-logo-fb">TSR</span>
-      <span class="nav-brand-text">THE SOARER REGISTRY</span>
+      <span class="nav-brand-text">The Soarer Registry</span>
     </a>
 
     <div class="nav-links" id="navLinks">
