@@ -2020,3 +2020,147 @@ textarea { resize: vertical; }
   max-width: 380px;
   line-height: 1.7;
 }
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL
+══════════════════════════════════════════ */
+
+.nav-admin-link { color: var(--danger) !important; font-weight: 600; }
+
+.admin-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.admin-header { margin-bottom: 28px; }
+.admin-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -0.3px;
+}
+.admin-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.admin-tab {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color var(--trans), border-color var(--trans);
+}
+.admin-tab:hover { color: var(--text-bright); }
+.admin-tab.active { color: var(--accent-hi); border-bottom-color: var(--accent); }
+
+/* Toolbar */
+.admin-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.admin-toolbar .toolbar-input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.admin-toolbar .toolbar-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-lo);
+}
+
+/* Table */
+.admin-table-wrap { overflow-x: auto; }
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-table th {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-lo);
+  color: var(--text);
+  vertical-align: middle;
+}
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table tr:hover td { background: var(--bg-3); }
+
+.admin-id   { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.admin-mono { font-family: var(--font-mono); font-size: 12px; }
+.admin-model { max-width: 180px; }
+.admin-nowrap { white-space: nowrap; }
+.admin-msg  { max-width: 320px; word-break: break-word; }
+.admin-actions { display: flex; gap: 6px; white-space: nowrap; }
+.text-muted { color: var(--text-muted); }
+
+/* Status select inside table */
+.admin-status-sel {
+  background: var(--bg-4);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.admin-status-sel:focus { outline: none; border-color: var(--accent); }
+
+/* Feedback category badge */
+.admin-cat {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--bg-4);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+/* Extra-small button variant */
+.btn-xs { padding: 4px 10px; font-size: 12px; }
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn-danger:hover { opacity: 0.85; }
+
+/* Empty / loading state */
+.admin-loading { color: var(--text-muted); font-size: 14px; padding: 24px 0; }
+.admin-empty   { color: var(--text-muted); font-size: 14px; padding: 24px 0; }
+
+/* Pager reuse */
+.admin-pager { margin-top: 20px; }
+.pager-info  { font-size: 13px; color: var(--text-muted); }

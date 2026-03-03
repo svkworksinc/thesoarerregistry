@@ -99,6 +99,7 @@ function showPage(name) {
   if (target === 'home') loadRegistryTable(registryPage);
   if (name === 'profile') loadProfile();
   if (name === 'submit')  { resetForm(); updateSubmitNotice(); }
+  if (name === 'admin')   loadAdminPanel();
   if (name !== 'car')     window.location.hash = '';
 }
 
@@ -129,6 +130,7 @@ function updateNavForUser() {
   const navUser = document.getElementById('navUser');
   if (!navAuth || !navUser) return;
 
+  const adminLink = document.getElementById('navAdminLink');
   if (currentUser) {
     navAuth.classList.add('hidden');
     navUser.classList.remove('hidden');
@@ -136,9 +138,11 @@ function updateNavForUser() {
       || currentUser.profile?.username
       || currentUser.email;
     document.getElementById('navUsername').textContent = name;
+    if (adminLink) adminLink.classList.toggle('hidden', !currentUser.profile?.is_admin);
   } else {
     navAuth.classList.remove('hidden');
     navUser.classList.add('hidden');
+    if (adminLink) adminLink.classList.add('hidden');
   }
 }
 
@@ -1153,4 +1157,200 @@ function escAttr(str) {
 function formatDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+
+let adminCarsPage = 1;
+const ADMIN_PAGE_SIZE = 30;
+
+function loadAdminPanel() {
+  if (!currentUser?.profile?.is_admin) { showPage('home'); return; }
+  switchAdminTab('cars');
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('#adminTabBar .admin-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+  const el = document.getElementById(`adminTab-${tab}`);
+  if (el) el.classList.remove('hidden');
+  if (tab === 'cars')     loadAdminCars(1);
+  if (tab === 'users')    loadAdminUsers();
+  if (tab === 'feedback') loadAdminFeedback();
+}
+
+async function loadAdminCars(page = 1) {
+  adminCarsPage = page;
+  const statusFilter = document.getElementById('adminCarStatusFilter')?.value || '';
+  const searchTerm   = document.getElementById('adminCarSearch')?.value.trim() || '';
+
+  let query = db.from('cars').select('*', { count: 'exact' });
+  if (statusFilter) query = query.eq('status', statusFilter);
+  if (searchTerm)   query = query.or(
+    `vin.ilike.%${searchTerm}%,frame_number.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%,chassis.ilike.%${searchTerm}%`
+  );
+  query = query.order('created_at', { ascending: false });
+  const from = (page - 1) * ADMIN_PAGE_SIZE;
+  query = query.range(from, from + ADMIN_PAGE_SIZE - 1);
+
+  const { data: cars, count, error } = await query;
+  if (error) { document.getElementById('adminCarsBody').textContent = error.message; return; }
+
+  const userIds = [...new Set((cars || []).filter(c => c.user_id).map(c => c.user_id))];
+  let profileMap = {};
+  if (userIds.length) {
+    const { data: profs } = await db.from('profiles')
+      .select('id, username, display_name').in('id', userIds);
+    (profs || []).forEach(p => { profileMap[p.id] = p; });
+  }
+
+  renderAdminCarsTable(cars || [], profileMap, count || 0, page);
+}
+
+function renderAdminCarsTable(cars, profileMap, total, page) {
+  const body  = document.getElementById('adminCarsBody');
+  const pager = document.getElementById('adminCarsPager');
+  if (!cars.length) {
+    body.innerHTML = '<p class="admin-empty">No cars found.</p>';
+    pager.innerHTML = '';
+    return;
+  }
+
+  const statusOptions = ['active', 'pending', 'flagged', 'deleted'];
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>ID</th><th>Chassis</th><th>Model</th><th>VIN / Frame</th>
+          <th>Owner</th><th>Status</th><th>Registered</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${cars.map(c => {
+            const prof  = profileMap[c.user_id];
+            const owner = prof ? escHtml(prof.username) : '<span class="text-muted">—</span>';
+            const ident = escHtml(c.vin || c.frame_number || '—');
+            const opts  = statusOptions.map(s =>
+              `<option value="${s}"${c.status === s ? ' selected' : ''}>${s}</option>`
+            ).join('');
+            return `<tr>
+              <td class="admin-id">${c.id}</td>
+              <td><span class="tag ${chassisTagClass(c.chassis)}">${escHtml(c.chassis)}</span></td>
+              <td class="admin-model">${escHtml(c.model)}</td>
+              <td class="admin-mono">${ident}</td>
+              <td>${owner}</td>
+              <td><select class="admin-status-sel" onchange="adminSetCarStatus(${c.id}, this.value)">${opts}</select></td>
+              <td class="text-muted admin-nowrap">${formatDate(c.created_at)}</td>
+              <td class="admin-actions">
+                <button class="btn btn-ghost btn-xs" onclick="showCarDetail(${c.id})">View</button>
+                <button class="btn btn-danger btn-xs" onclick="adminDeleteCar(${c.id})">Delete</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  const totalPages = Math.ceil(total / ADMIN_PAGE_SIZE);
+  pager.innerHTML = totalPages <= 1 ? '' : `
+    <div class="pagination">
+      <span class="pager-info">${total} total &mdash; page ${page} of ${totalPages}</span>
+      <button class="page-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadAdminCars(${page - 1})">&#8249; Prev</button>
+      <button class="page-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadAdminCars(${page + 1})">Next &#8250;</button>
+    </div>`;
+}
+
+async function adminSetCarStatus(carId, status) {
+  const { error } = await db.from('cars').update({ status }).eq('id', carId);
+  if (error) alert('Error: ' + error.message);
+}
+
+async function adminDeleteCar(carId) {
+  if (!confirm(`Permanently delete car #${carId}? This cannot be undone.`)) return;
+  const { error } = await db.from('cars').delete().eq('id', carId);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadAdminCars(adminCarsPage);
+}
+
+async function loadAdminUsers() {
+  const { data: users, error } = await db.from('profiles')
+    .select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('adminUsersBody').textContent = error.message; return; }
+  renderAdminUsersTable(users || []);
+}
+
+function renderAdminUsersTable(users) {
+  const body = document.getElementById('adminUsersBody');
+  if (!users.length) { body.innerHTML = '<p class="admin-empty">No users found.</p>'; return; }
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Username</th><th>Display Name</th><th>Email</th>
+          <th>Location</th><th>Joined</th><th>Admin</th>
+        </tr></thead>
+        <tbody>
+          ${users.map(u => `<tr>
+            <td class="admin-mono">${escHtml(u.username)}</td>
+            <td>${escHtml(u.display_name || '—')}</td>
+            <td class="text-muted">${escHtml(u.email || '—')}</td>
+            <td class="text-muted">${escHtml(u.location || '—')}</td>
+            <td class="text-muted admin-nowrap">${formatDate(u.created_at)}</td>
+            <td>
+              <button class="btn btn-xs ${u.is_admin ? 'btn-accent' : 'btn-ghost'}"
+                onclick="adminToggleAdmin('${escAttr(u.id)}', ${u.is_admin})">
+                ${u.is_admin ? 'Admin ✓' : 'Make Admin'}
+              </button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function adminToggleAdmin(userId, currentIsAdmin) {
+  if (currentIsAdmin && userId === currentUser?.id) {
+    if (!confirm('Remove your own admin access?')) return;
+  }
+  const { error } = await db.from('profiles')
+    .update({ is_admin: !currentIsAdmin }).eq('id', userId);
+  if (error) { alert('Error: ' + error.message); return; }
+  if (userId === currentUser?.id) {
+    currentUser.profile.is_admin = !currentIsAdmin;
+    updateNavForUser();
+  }
+  loadAdminUsers();
+}
+
+async function loadAdminFeedback() {
+  const { data: items, error } = await db.from('feedback')
+    .select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('adminFeedbackBody').textContent = error.message; return; }
+  renderAdminFeedbackTable(items || []);
+}
+
+function renderAdminFeedbackTable(items) {
+  const body = document.getElementById('adminFeedbackBody');
+  if (!items.length) { body.innerHTML = '<p class="admin-empty">No feedback yet.</p>'; return; }
+
+  body.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Date</th><th>Category</th><th>Name</th><th>Email</th><th>Message</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(f => `<tr>
+            <td class="text-muted admin-nowrap">${formatDate(f.created_at)}</td>
+            <td><span class="admin-cat">${escHtml(f.category)}</span></td>
+            <td>${escHtml(f.name || '—')}</td>
+            <td class="text-muted">${escHtml(f.email || '—')}</td>
+            <td class="admin-msg">${escHtml(f.message)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }

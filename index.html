@@ -880,6 +880,53 @@
     </div><!-- /library-body -->
   </div><!-- /page-library -->
 
+
+  <!-- ═══════════════════════════════════════
+       ADMIN PAGE
+       ═══════════════════════════════════════ -->
+  <div id="page-admin" class="page">
+    <div class="admin-wrap">
+
+      <div class="admin-header">
+        <h2 class="admin-title">Admin Panel</h2>
+        <p class="admin-subtitle">Full registry control &mdash; cars, users, and feedback.</p>
+      </div>
+
+      <div class="admin-tabs" id="adminTabBar">
+        <button class="admin-tab active" data-tab="cars"     onclick="switchAdminTab('cars')">All Cars</button>
+        <button class="admin-tab"        data-tab="users"    onclick="switchAdminTab('users')">Users</button>
+        <button class="admin-tab"        data-tab="feedback" onclick="switchAdminTab('feedback')">Feedback</button>
+      </div>
+
+      <!-- ── CARS TAB ── -->
+      <div id="adminTab-cars" class="admin-tab-content">
+        <div class="admin-toolbar">
+          <select id="adminCarStatusFilter" class="toolbar-select" onchange="loadAdminCars(1)">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="flagged">Flagged</option>
+            <option value="deleted">Deleted</option>
+          </select>
+          <input type="text" id="adminCarSearch" class="toolbar-input" placeholder="Search VIN, frame, model…" oninput="loadAdminCars(1)" />
+        </div>
+        <div id="adminCarsBody" class="admin-loading">Loading…</div>
+        <div id="adminCarsPager" class="admin-pager"></div>
+      </div>
+
+      <!-- ── USERS TAB ── -->
+      <div id="adminTab-users" class="admin-tab-content hidden">
+        <div id="adminUsersBody" class="admin-loading">Loading…</div>
+      </div>
+
+      <!-- ── FEEDBACK TAB ── -->
+      <div id="adminTab-feedback" class="admin-tab-content hidden">
+        <div id="adminFeedbackBody" class="admin-loading">Loading…</div>
+      </div>
+
+    </div>
+  </div>
+
 </main><!-- /app -->
 
 <!-- FOOTER -->

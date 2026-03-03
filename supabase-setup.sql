@@ -220,3 +220,48 @@ CREATE POLICY "feedback_insert" ON feedback FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "feedback_select" ON feedback;
 CREATE POLICY "feedback_select" ON feedback FOR SELECT
   USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
+
+-- ================================================================
+-- ADMIN SETUP
+-- ================================================================
+-- Helper function to check admin status (SECURITY DEFINER avoids
+-- recursive RLS when querying profiles from within a profiles policy)
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (SELECT is_admin FROM profiles WHERE id = auth.uid()),
+    false
+  );
+$$;
+
+-- Admins can update/delete any car (regular policies still apply for owners)
+DROP POLICY IF EXISTS "cars_update_admin" ON cars;
+DROP POLICY IF EXISTS "cars_delete_admin" ON cars;
+CREATE POLICY "cars_update_admin" ON cars FOR UPDATE
+  USING (is_admin());
+CREATE POLICY "cars_delete_admin" ON cars FOR DELETE
+  USING (is_admin());
+
+-- Admins can update any profile (e.g. toggle is_admin on other accounts)
+DROP POLICY IF EXISTS "profiles_update_admin" ON profiles;
+CREATE POLICY "profiles_update_admin" ON profiles FOR UPDATE
+  USING (is_admin());
+
+-- Admins can manage images on any car
+DROP POLICY IF EXISTS "images_insert_admin" ON car_images;
+DROP POLICY IF EXISTS "images_delete_admin" ON car_images;
+CREATE POLICY "images_insert_admin" ON car_images FOR INSERT TO authenticated
+  WITH CHECK (is_admin());
+CREATE POLICY "images_delete_admin" ON car_images FOR DELETE
+  USING (is_admin());
+
+-- ── TO GRANT YOURSELF ADMIN ACCESS ────────────────────────────────────────────
+-- Run this in the Supabase SQL Editor after creating your account:
+--
+--   UPDATE profiles SET is_admin = true WHERE username = 'your_username';
+--
+-- ──────────────────────────────────────────────────────────────────────────────
