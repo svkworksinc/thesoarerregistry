@@ -149,6 +149,7 @@ async function doRegister(e) {
   const password = document.getElementById('regPass').value;
   const display  = document.getElementById('regDisplay').value.trim();
   const errEl    = document.getElementById('regError');
+  const btn      = document.getElementById('regSubmitBtn');
   errEl.classList.add('hidden');
 
   if (!/^[a-z0-9_-]{3,30}$/.test(username)) {
@@ -163,6 +164,9 @@ async function doRegister(e) {
     errEl.classList.remove('hidden'); return;
   }
 
+  btn.disabled = true;
+  btn.textContent = 'Creating Account…';
+
   const { data, error } = await db.auth.signUp({
     email, password,
     options: {
@@ -172,19 +176,24 @@ async function doRegister(e) {
   });
 
   if (error) {
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
     errEl.textContent = error.message;
     errEl.classList.remove('hidden'); return;
   }
 
-  closeModal('registerModal');
+  btn.textContent = 'Account Created!';
+
   ['regUser','regEmail','regPass','regDisplay'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
 
-  if (!data.session) {
-    alert('Account created! Check your email to confirm, then log in.');
-  }
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+    closeModal('registerModal');
+  }, 1800);
 }
 
 async function doLogin(e) {
