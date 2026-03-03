@@ -411,18 +411,18 @@ async function showCarDetail(id) {
     if (isNaN(id)) {
       // VIN or frame number lookup
       const { data: byVin } = await db.from('cars')
-        .select('*, profiles:user_id(username, display_name), car_images(*)')
+        .select('*, car_images(*)')
         .eq('vin', String(id).toUpperCase()).maybeSingle();
       const { data: byFrame } = !byVin
         ? await db.from('cars')
-            .select('*, profiles:user_id(username, display_name), car_images(*)')
+            .select('*, car_images(*)')
             .eq('frame_number', String(id).toUpperCase()).maybeSingle()
         : { data: null };
       car = byVin || byFrame;
       if (!car) throw new Error('Not found');
     } else {
       const { data, error } = await db.from('cars')
-        .select('*, profiles:user_id(username, display_name), car_images(*)')
+        .select('*, car_images(*)')
         .eq('id', parseInt(id)).single();
       if (error || !data) throw new Error('Not found');
       car = data;
