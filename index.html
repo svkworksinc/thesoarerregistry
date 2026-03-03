@@ -212,7 +212,21 @@
         <!-- Section: VIN & Frame -->
         <fieldset class="form-section">
           <legend>VIN &amp; Frame Number</legend>
-          <p class="form-hint"><span class="req">*</span> At least one of VIN or Frame Number is <strong>required</strong>. Both must be unique in the registry.</p>
+          <p class="form-hint">Search the VIN directory to verify your car and auto-fill details, or enter a VIN manually.</p>
+
+          <div class="vin-search-wrap">
+            <div class="vin-search-box">
+              <input type="text" id="f-vin-search" class="vin-search-input"
+                     placeholder="Start typing a VIN to search the directory…"
+                     autocomplete="off" oninput="onVinSearchInput()" />
+              <button type="button" id="vinClearBtn" class="vin-clear-btn hidden"
+                      onclick="clearVinSelection()">&times;</button>
+            </div>
+            <div id="vinSearchResults" class="vin-results hidden"></div>
+            <div id="vinStatus" class="vin-status hidden"></div>
+          </div>
+
+          <p class="form-hint" style="margin-top:14px;"><span class="req">*</span> At least one of VIN or Frame Number is <strong>required</strong>. Both must be unique in the registry.</p>
           <div class="form-grid">
             <div class="form-group">
               <label for="f-vin">VIN <span class="req">*</span></label>
@@ -879,6 +893,124 @@
 
     </div><!-- /library-body -->
   </div><!-- /page-library -->
+
+
+  <!-- ═══════════════════════════════════════
+       ADMIN PAGE
+       ═══════════════════════════════════════ -->
+  <div id="page-admin" class="page">
+    <div class="admin-wrap">
+
+      <div class="admin-header">
+        <h2 class="admin-title">Admin Panel</h2>
+        <p class="admin-subtitle">Full registry control &mdash; cars, users, and feedback.</p>
+      </div>
+
+      <div class="admin-tabs" id="adminTabBar">
+        <button class="admin-tab active" data-tab="cars"     onclick="switchAdminTab('cars')">All Cars</button>
+        <button class="admin-tab"        data-tab="users"    onclick="switchAdminTab('users')">Users</button>
+        <button class="admin-tab"        data-tab="feedback" onclick="switchAdminTab('feedback')">Feedback</button>
+        <button class="admin-tab"        data-tab="vins"     onclick="switchAdminTab('vins')">VIN Directory</button>
+      </div>
+
+      <!-- ── CARS TAB ── -->
+      <div id="adminTab-cars" class="admin-tab-content">
+        <div class="admin-toolbar">
+          <select id="adminCarStatusFilter" class="toolbar-select" onchange="loadAdminCars(1)">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="flagged">Flagged</option>
+            <option value="deleted">Deleted</option>
+          </select>
+          <input type="text" id="adminCarSearch" class="toolbar-input" placeholder="Search VIN, frame, model…" oninput="loadAdminCars(1)" />
+        </div>
+        <div id="adminCarsBody" class="admin-loading">Loading…</div>
+        <div id="adminCarsPager" class="admin-pager"></div>
+      </div>
+
+      <!-- ── USERS TAB ── -->
+      <div id="adminTab-users" class="admin-tab-content hidden">
+        <div id="adminUsersBody" class="admin-loading">Loading…</div>
+      </div>
+
+      <!-- ── FEEDBACK TAB ── -->
+      <div id="adminTab-feedback" class="admin-tab-content hidden">
+        <div id="adminFeedbackBody" class="admin-loading">Loading…</div>
+      </div>
+
+      <!-- ── VIN DIRECTORY TAB ── -->
+      <div id="adminTab-vins" class="admin-tab-content hidden">
+        <div class="admin-toolbar">
+          <input type="text" id="adminVinSearch" class="toolbar-input" placeholder="Search VINs…" oninput="loadAdminVins()" />
+          <button class="btn btn-accent btn-sm" onclick="showAddVinForm()">+ Add VIN</button>
+        </div>
+
+        <div id="adminAddVinForm" class="admin-add-form hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>VIN <span class="req">*</span></label>
+              <input type="text" id="av-vin" placeholder="e.g. JT111MA20P0012345" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+              <label>Frame Number</label>
+              <input type="text" id="av-frame" placeholder="e.g. JZZ30-0012345" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+              <label>Chassis</label>
+              <select id="av-chassis">
+                <option value="">-</option>
+                <option value="Z10">Z10</option>
+                <option value="Z20">Z20</option>
+                <option value="Z30">Z30</option>
+                <option value="Z40">Z40</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <input type="text" id="av-model" placeholder="e.g. Soarer 3.0GT" />
+            </div>
+            <div class="form-group">
+              <label>Mfg Year</label>
+              <input type="number" id="av-year" min="1981" max="2010" />
+            </div>
+            <div class="form-group">
+              <label>Mfg Month</label>
+              <input type="number" id="av-month" min="1" max="12" />
+            </div>
+            <div class="form-group">
+              <label>Engine</label>
+              <input type="text" id="av-engine" placeholder="e.g. 2JZ-GE (3.0L NA)" />
+            </div>
+            <div class="form-group">
+              <label>Transmission</label>
+              <select id="av-transmission">
+                <option value="">-</option>
+                <option value="Automatic">Automatic</option>
+                <option value="Manual">Manual</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Exterior Color</label>
+              <input type="text" id="av-color" placeholder="e.g. Super White" />
+            </div>
+            <div class="form-group">
+              <label>Color Code</label>
+              <input type="text" id="av-color-code" placeholder="e.g. 040" />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-accent btn-sm" onclick="adminAddVin()">Save VIN</button>
+            <button class="btn btn-ghost btn-sm" onclick="hideAddVinForm()">Cancel</button>
+          </div>
+          <div id="adminVinError" class="form-error hidden" style="margin-top:8px;"></div>
+        </div>
+
+        <div id="adminVinsBody" class="admin-loading">Loading…</div>
+      </div>
+
+    </div>
+  </div>
 
 </main><!-- /app -->
 
