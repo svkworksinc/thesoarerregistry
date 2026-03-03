@@ -325,14 +325,14 @@ textarea { resize: vertical; }
   background: var(--accent);
 }
 .hero-title {
-  font-family: var(--font-display);
-  font-size: clamp(40px, 7vw, 88px);
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(36px, 6.5vw, 82px);
   font-weight: 800;
-  font-style: italic;
-  line-height: 1.0;
-  letter-spacing: -0.01em;
+  font-style: normal;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   color: var(--white);
-  text-shadow: 0 2px 40px rgba(20, 40, 80, 0.6);
+  text-shadow: 0 2px 40px rgba(20, 40, 80, 0.5);
   margin-bottom: 22px;
 }
 .hero-desc {
