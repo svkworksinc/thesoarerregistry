@@ -58,9 +58,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentUser = null;
     }
     updateNavForUser();
+    // If the profile page is already open (e.g. auth resolved after the page
+    // was shown), reload it so the car grid populates correctly.
+    if (currentUser && document.getElementById('page-profile')?.classList.contains('active')) {
+      loadProfile();
+    }
   });
 
-  await db.auth.getSession();
+  // Eagerly resolve the current session so that auth-gated pages (like #profile)
+  // work correctly on page load without waiting for onAuthStateChange to fire.
+  const { data: { session: initSession } } = await db.auth.getSession();
+  if (initSession?.user && !currentUser) currentUser = initSession.user;
 
   // Run independent fetches in parallel
   Promise.all([loadStats(), loadRegistryTable(1)]);
@@ -560,7 +568,14 @@ function renderCarDetail(car) {
           <div class="info-panel">
             <div class="info-panel-title">Identification</div>
             ${row('Frame Number', car.frame_number, true)}
-            ${row('VIN', car.vin, true)}
+            ${car.vin
+              ? `<div class="info-row">
+                  <span class="info-key">VIN</span>
+                  <span class="info-value mono">${escHtml(car.vin)}${car.vin_matched === false
+                    ? ' <span class="vin-badge vin-manual" title="Manually entered — not verified from VIN directory">Manual Entry</span>'
+                    : ''}</span>
+                </div>`
+              : row('VIN', null, true)}
             ${row('Model', car.model)}
             ${row('Chassis', car.chassis)}
           </div>
@@ -948,6 +963,16 @@ async function submitCar(e) {
     current_owner_name: get('f-owner')               || null,
     notes:              get('f-notes')               || null,
   };
+
+  // Track whether VIN came from the directory or was typed manually.
+  // For new registrations always record it; for edits only update if the user
+  // actively picked an entry from the directory (to avoid resetting a
+  // previously-verified VIN when saving unrelated field changes).
+  if (!isEdit) {
+    carData.vin_matched = !!selectedVinEntry;
+  } else if (selectedVinEntry) {
+    carData.vin_matched = true;
+  }
 
   if (!carData.chassis || !carData.model) {
     errEl.textContent = 'Chassis and Model are required.';
@@ -1354,6 +1379,7 @@ function renderAdminCarsTable(cars, profileMap, total, page) {
             const prof  = profileMap[c.user_id];
             const owner = prof ? escHtml(prof.username) : '<span class="text-muted">—</span>';
             const ident = escHtml(c.vin || c.frame_number || '—');
+            const manualVin = c.vin && c.vin_matched === false;
             const opts  = statusOptions.map(s =>
               `<option value="${s}"${c.status === s ? ' selected' : ''}>${s}</option>`
             ).join('');
@@ -1361,7 +1387,7 @@ function renderAdminCarsTable(cars, profileMap, total, page) {
               <td class="admin-id">${c.id}</td>
               <td><span class="tag ${chassisTagClass(c.chassis)}">${escHtml(c.chassis)}</span></td>
               <td class="admin-model">${escHtml(c.model)}</td>
-              <td class="admin-mono">${ident}</td>
+              <td class="admin-mono">${ident}${manualVin ? ' <span class="vin-badge vin-manual" title="Manually entered VIN — not verified from directory">Manual</span>' : ''}</td>
               <td>${owner}</td>
               <td><select class="admin-status-sel" onchange="adminSetCarStatus(${c.id}, this.value)">${opts}</select></td>
               <td class="text-muted admin-nowrap">${formatDate(c.created_at)}</td>
