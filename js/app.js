@@ -47,8 +47,31 @@ function chassisTagClass(chassis) {
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   checkSetup();
+  setupDragDrop();
 
-  db.auth.onAuthStateChange(async (_event, session) => {
+  // ── Step 1: Resolve initial auth state ─────────────────
+  // getSession() waits for any in-progress token refresh to complete,
+  // so every subsequent DB query uses a fresh, valid JWT.  Without this,
+  // a stored-but-expired access token would cause PostgREST to reject
+  // even public (USING true) queries before evaluating RLS at all.
+  const { data: { session: initSession } } = await db.auth.getSession();
+  if (initSession?.user) {
+    currentUser = initSession.user;
+    const { data: initProfile } = await db.from('profiles')
+      .select('*').eq('id', initSession.user.id).maybeSingle();
+    currentUser.profile = initProfile || {};
+  }
+  updateNavForUser();
+
+  // ── Step 2: Load public data and run hash nav ───────────
+  // Auth is now settled and the JWT is valid, so these queries succeed.
+  Promise.all([loadStats(), loadRegistryTable(1)]);
+  handleHashNav();
+
+  // ── Step 3: React to future auth events ────────────────
+  // INITIAL_SESSION is already handled above; only handle subsequent events.
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'INITIAL_SESSION') return;
     if (session?.user) {
       currentUser = session.user;
       const { data: profile } = await db.from('profiles')
@@ -58,22 +81,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentUser = null;
     }
     updateNavForUser();
-    // If the profile page is already open (e.g. auth resolved after the page
-    // was shown), reload it so the car grid populates correctly.
+    // If the profile page is open, reload it so car grid refreshes.
     if (currentUser && document.getElementById('page-profile')?.classList.contains('active')) {
       loadProfile();
     }
   });
-
-  // Eagerly resolve the current session so that auth-gated pages (like #profile)
-  // work correctly on page load without waiting for onAuthStateChange to fire.
-  const { data: { session: initSession } } = await db.auth.getSession();
-  if (initSession?.user && !currentUser) currentUser = initSession.user;
-
-  // Run independent fetches in parallel
-  Promise.all([loadStats(), loadRegistryTable(1)]);
-  setupDragDrop();
-  handleHashNav();
 
   // Close VIN search dropdown on outside click
   document.addEventListener('click', e => {
