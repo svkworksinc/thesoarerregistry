@@ -496,93 +496,100 @@ function renderCarDetail(car) {
 
     <div class="car-detail-body">
 
-      <div class="car-detail-gallery-full">
-        <div class="gallery-main">${mainImg}</div>
-        ${thumbsHTML}
-      </div>
-
-      ${isOwner ? `<div class="detail-actions" style="margin-top:16px;">
-        <button class="btn btn-outline btn-sm" onclick="editCar(${car.id})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCar(${car.id})">Delete</button>
-      </div>` : ''}
-
-      <div class="car-spec-grid">
-
-        <div class="info-panel">
-          <div class="info-panel-title">Identification</div>
-          ${row('Frame Number', car.frame_number, true)}
-          ${row('VIN', car.vin, true)}
-          ${row('Model', car.model)}
-          ${row('Chassis', car.chassis)}
+      <!-- LEFT: gallery + ownership -->
+      <div class="car-detail-left">
+        <div class="car-detail-gallery">
+          <div class="gallery-main">${mainImg}</div>
+          ${thumbsHTML}
         </div>
 
-        <div class="info-panel">
-          <div class="info-panel-title">Production</div>
-          ${row('Mfg. Year', car.mfg_year ? String(car.mfg_year) : null)}
-          ${row('Mfg. Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
-          ${row('Plant', car.plant)}
-          ${row('Body', car.body_type)}
-          ${row('Body Shape', car.body_shape)}
-        </div>
+        ${isOwner ? `<div class="detail-actions" style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="editCar(${car.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCar(${car.id})">Delete</button>
+        </div>` : ''}
 
-        <div class="info-panel">
-          <div class="info-panel-title">Specification</div>
-          ${row('Engine', car.engine)}
-          ${row('Transmission Type', car.transmission)}
-          ${row('Transmission', car.gearbox)}
-          ${row('Fuel System', car.fuel_system)}
-          ${row('Driver Position', car.drive_side)}
-        </div>
-
-        <div class="info-panel">
-          <div class="info-panel-title">Grade &amp; Market</div>
-          ${row('Grade', car.grade)}
-          ${row('Trim', car.trim)}
-          ${row('Market', car.market)}
-          ${row('Destination', car.destination)}
-        </div>
-
-        <div class="info-panel">
-          <div class="info-panel-title">Appearance</div>
-          ${row('Exterior Color', car.color)}
-          ${row('Color Code', car.color_code, true)}
-          ${row('Trim Code', car.trim_code, true)}
-          ${row('Interior Color', car.interior_color)}
-          ${row('Interior Material', car.interior_material)}
-        </div>
-
-        <div class="info-panel">
-          <div class="info-panel-title">Status &amp; Location</div>
-          ${row('Title Status', car.title_status)}
-          ${row('Current Country', car.country)}
-          ${row('State / Region', car.location)}
-          ${row('Verification', car.verification)}
-        </div>
-
-      </div>
-
-      ${car.notes ? `<div class="notes-box" style="margin-top:16px;"><h4>Notes</h4><p>${escHtml(car.notes)}</p></div>` : ''}
-
-      <div class="car-ownership-section">
-        <div class="ownership-section-title">Ownership &amp; Registry</div>
-        <div class="owner-cards">
-          <div class="owner-card">
-            <div class="owner-avatar">${ownerInitials}</div>
-            <div class="owner-info">
-              <div class="owner-name">${escHtml(ownerName || 'Anonymous')}</div>
-              ${profiles.username ? `<div class="owner-username">@${escHtml(profiles.username)}</div>` : ''}
-              <div class="owner-meta">
-                ${car.current_owner_name && car.current_owner_name !== ownerName
-                  ? `Listed owner: ${escHtml(car.current_owner_name)}<br>` : ''}
-                Registered ${formatDate(car.created_at)}
-                ${car.updated_at ? `<br>Last updated ${formatDate(car.updated_at)}` : ''}
+        <div class="car-ownership-section">
+          <div class="ownership-section-title">Ownership &amp; Registry</div>
+          <div class="owner-cards">
+            <div class="owner-card">
+              <div class="owner-avatar">${ownerInitials}</div>
+              <div class="owner-info">
+                <div class="owner-name">${escHtml(ownerName || 'Anonymous')}</div>
+                ${profiles.username ? `<div class="owner-username">@${escHtml(profiles.username)}</div>` : ''}
+                <div class="owner-meta">
+                  ${car.current_owner_name && car.current_owner_name !== ownerName
+                    ? `Listed owner: ${escHtml(car.current_owner_name)}<br>` : ''}
+                  Registered ${formatDate(car.created_at)}
+                  ${car.updated_at ? `<br>Last updated ${formatDate(car.updated_at)}` : ''}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <button class="btn btn-outline btn-sm" onclick="showPage('home')" style="margin-top:16px;">&larr; Back to Registry</button>
       </div>
 
-      <button class="btn btn-outline" onclick="showPage('home')" style="margin-top:24px;">&larr; Back to Registry</button>
+      <!-- RIGHT: specs -->
+      <div class="car-detail-right">
+        <div class="car-spec-grid">
+
+          <div class="info-panel">
+            <div class="info-panel-title">Identification</div>
+            ${row('Frame Number', car.frame_number, true)}
+            ${row('VIN', car.vin, true)}
+            ${row('Model', car.model)}
+            ${row('Chassis', car.chassis)}
+          </div>
+
+          <div class="info-panel">
+            <div class="info-panel-title">Production</div>
+            ${row('Mfg. Year', car.mfg_year ? String(car.mfg_year) : null)}
+            ${row('Mfg. Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
+            ${row('Plant', car.plant)}
+            ${row('Body', car.body_type)}
+            ${row('Body Shape', car.body_shape)}
+          </div>
+
+          <div class="info-panel">
+            <div class="info-panel-title">Specification</div>
+            ${row('Engine', car.engine)}
+            ${row('Transmission', car.transmission)}
+            ${row('Gear Shift', car.gear_shift)}
+            ${row('Fuel System', car.fuel_system)}
+            ${row('Driver Position', car.drive_side)}
+          </div>
+
+          <div class="info-panel">
+            <div class="info-panel-title">Grade &amp; Market</div>
+            ${row('Grade', car.grade)}
+            ${row('Trim', car.trim)}
+            ${row('Market', car.market)}
+            ${row('Destination', car.destination)}
+          </div>
+
+          <div class="info-panel">
+            <div class="info-panel-title">Appearance</div>
+            ${row('Exterior Color', car.color)}
+            ${row('Color Code', car.color_code, true)}
+            ${row('Trim Code', car.trim_code, true)}
+            ${row('Interior Color', car.interior_color)}
+            ${row('Interior Material', car.interior_material)}
+          </div>
+
+          <div class="info-panel">
+            <div class="info-panel-title">Status &amp; Location</div>
+            ${row('Title Status', car.title_status)}
+            ${row('Current Country', car.country)}
+            ${row('State / Region', car.location)}
+            ${row('Verification', car.verification)}
+          </div>
+
+        </div>
+
+        ${car.notes ? `<div class="notes-box" style="margin-top:16px;"><h4>Notes</h4><p>${escHtml(car.notes)}</p></div>` : ''}
+      </div>
+
     </div>`;
 }
 
@@ -593,6 +600,77 @@ function selectImage(index) {
   if (mainImg) mainImg.src = lightboxImages[index].src;
   document.querySelectorAll('.gallery-thumb')
     .forEach((t, i) => t.classList.toggle('active', i === index));
+}
+
+// ── MEDIA VIEWER (brochures / articles) ───────────────────
+let _mediaImages = [];
+let _mediaIndex  = 0;
+
+function openMedia(opts) {
+  const modal      = document.getElementById('mediaModal');
+  const titleEl    = document.getElementById('mediaModalTitle');
+  const contentEl  = document.getElementById('mediaModalContent');
+  const dlBtn      = document.getElementById('mediaModalDownload');
+
+  titleEl.textContent = opts.title || '';
+  dlBtn.classList.add('hidden');
+  dlBtn.href = '#';
+
+  if (opts.type === 'pdf') {
+    dlBtn.href = opts.src;
+    dlBtn.setAttribute('download', opts.filename || 'document.pdf');
+    dlBtn.classList.remove('hidden');
+    contentEl.innerHTML =
+      `<iframe class="media-pdf-frame" src="${escAttr(opts.src)}" title="${escAttr(opts.title || '')}"></iframe>`;
+
+  } else if (opts.type === 'images') {
+    _mediaImages = opts.images || [];
+    _mediaIndex  = 0;
+    contentEl.innerHTML = _buildMediaGallery();
+
+  } else {
+    // coming-soon placeholder
+    contentEl.innerHTML = `
+      <div class="media-coming-soon">
+        <div class="media-coming-icon">&#128197;</div>
+        <div class="media-coming-title">Content Coming Soon</div>
+        <p>This item hasn't been digitised yet. If you have a copy, please reach out to the community to contribute.</p>
+      </div>`;
+  }
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMediaModal(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('media-modal-close')) return;
+  const modal = document.getElementById('mediaModal');
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+  document.getElementById('mediaModalContent').innerHTML = '';
+}
+
+function _buildMediaGallery() {
+  if (!_mediaImages.length) return '<div class="media-coming-soon"><p>No images.</p></div>';
+  const img = _mediaImages[_mediaIndex];
+  const counter = `${_mediaIndex + 1} / ${_mediaImages.length}`;
+  return `
+    <div class="media-gallery-viewer">
+      <div class="media-gallery-img-wrap">
+        <img src="${escAttr(img.src || img)}" alt="Page ${_mediaIndex + 1}" class="media-gallery-img" />
+      </div>
+      ${img.caption ? `<div class="media-gallery-caption">${escHtml(img.caption)}</div>` : ''}
+      <div class="media-gallery-nav">
+        <button class="btn btn-outline btn-sm" onclick="navigateMedia(-1)" ${_mediaIndex === 0 ? 'disabled' : ''}>&larr; Prev</button>
+        <span class="media-gallery-counter">${counter}</span>
+        <button class="btn btn-outline btn-sm" onclick="navigateMedia(1)" ${_mediaIndex === _mediaImages.length - 1 ? 'disabled' : ''}>Next &rarr;</button>
+      </div>
+    </div>`;
+}
+
+function navigateMedia(dir) {
+  _mediaIndex = Math.max(0, Math.min(_mediaImages.length - 1, _mediaIndex + dir));
+  document.getElementById('mediaModalContent').innerHTML = _buildMediaGallery();
 }
 
 // ── LIGHTBOX ──────────────────────────────────────────────
