@@ -3,392 +3,303 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Soarer Registry</title>
+  <title>The Soarer Registry — Global Chassis Database</title>
+  <meta name="description" content="Documenting every Toyota Soarer and Lexus SC in existence. One car. One record. Forever." />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<!-- SETUP BANNER (hidden once Supabase is configured) -->
+<!-- SETUP BANNER -->
 <div id="setupBanner" class="setup-banner hidden">
-  <strong>&#9888; Setup Required</strong> — Open <code>js/config.js</code> and add your Supabase URL &amp; key.
+  <strong>&#9888; Setup Required</strong> &mdash; Open <code>js/config.js</code> and add your Supabase URL &amp; key.
   See <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a> and follow the steps in <code>supabase-setup.sql</code>.
 </div>
 
-<!-- NAVIGATION -->
-<nav class="navbar" id="navbar">
-  <div class="nav-inner">
-    <a class="nav-brand" href="#" onclick="showPage('home')">
-      <span class="brand-accent">THE</span> SOARER REGISTRY
-    </a>
-    <div class="nav-links" id="navLinks">
-      <a href="#" onclick="showPage('home')">Home</a>
-      <a href="#" onclick="showPage('registry')">Registry</a>
-      <a href="#" onclick="showPage('submit')">Register a Car</a>
-      <a href="#" onclick="showPage('about')">About</a>
-    </div>
-    <div class="nav-auth" id="navAuth">
-      <button class="btn btn-outline btn-sm" onclick="showModal('loginModal')">Log In</button>
-      <button class="btn btn-primary btn-sm" onclick="showModal('registerModal')">Sign Up</button>
-    </div>
-    <div class="nav-user hidden" id="navUser">
-      <span id="navUsername"></span>
-      <button class="btn btn-outline btn-sm" onclick="showPage('profile')">My Cars</button>
-      <button class="btn btn-ghost btn-sm" onclick="logout()">Log Out</button>
-    </div>
-    <button class="nav-toggle" id="navToggle" onclick="toggleNav()">&#9776;</button>
-  </div>
-</nav>
+<!-- NAVBAR -->
+<div id="navbar-root"></div>
 
 <!-- PAGES -->
 <main id="app">
 
-  <!-- HOME PAGE -->
+  <!-- ═══════════════════════════════════════
+       HOME PAGE  (Hero + Registry Table)
+       ═══════════════════════════════════════ -->
   <div id="page-home" class="page active">
+
+    <!-- HERO -->
     <section class="hero">
-      <div class="hero-overlay"></div>
+      <div class="hero-bg"></div>
+      <div class="hero-scan-lines" aria-hidden="true"></div>
       <div class="hero-content">
-        <p class="hero-eyebrow">The Global Database</p>
-        <h1 class="hero-title">THE SOARER<br/>REGISTRY</h1>
-        <p class="hero-subtitle">Documenting every Toyota Soarer &amp; Lexus SC in existence.<br/>One car. One record. Forever.</p>
-        <div class="hero-actions">
-          <button class="btn btn-primary btn-lg" onclick="showPage('registry')">Browse Registry</button>
-          <button class="btn btn-outline btn-lg" onclick="showPage('submit')">Register Your Car</button>
+        <div class="hero-eyebrow">EST. 1981 &nbsp;&bull;&nbsp; GLOBAL CHASSIS DATABASE</div>
+        <h1 class="hero-title">THE SOARER<br>REGISTRY</h1>
+        <p class="hero-desc">Documenting every Toyota Soarer &amp; Lexus SC in existence.<br>One car. One record. Forever.</p>
+        <div class="hero-cta">
+          <button class="btn btn-accent btn-lg" onclick="showPage('submit')">Register Your Car</button>
+          <button class="btn btn-outline btn-lg" onclick="scrollToRegistry()">Browse Registry &darr;</button>
+        </div>
+      </div>
+      <div class="hero-corner-tl" aria-hidden="true"></div>
+      <div class="hero-corner-br" aria-hidden="true"></div>
+    </section>
+
+    <!-- STATS BAR -->
+    <section class="stats-bar">
+      <div class="stats-inner">
+        <div class="stat-block">
+          <span class="stat-num" id="statTotal">0</span>
+          <span class="stat-lbl">REGISTERED</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat-block stat-chassis" onclick="quickFilterChassis('Z10')">
+          <span class="stat-num" id="statZ10">0</span>
+          <span class="stat-lbl">Z10</span>
+        </div>
+        <div class="stat-block stat-chassis" onclick="quickFilterChassis('Z20')">
+          <span class="stat-num" id="statZ20">0</span>
+          <span class="stat-lbl">Z20</span>
+        </div>
+        <div class="stat-block stat-chassis" onclick="quickFilterChassis('Z30')">
+          <span class="stat-num" id="statZ30">0</span>
+          <span class="stat-lbl">Z30</span>
+        </div>
+        <div class="stat-block stat-chassis" onclick="quickFilterChassis('Z40')">
+          <span class="stat-num" id="statZ40">0</span>
+          <span class="stat-lbl">Z40</span>
         </div>
       </div>
     </section>
 
-    <!-- Stats Banner -->
-    <section class="stats-banner">
-      <div class="container">
-        <div class="stats-grid" id="statsGrid">
-          <div class="stat-card">
-            <div class="stat-number" id="statTotal">—</div>
-            <div class="stat-label">Cars Registered</div>
-          </div>
-          <div class="stat-card" id="statZ10Card">
-            <div class="stat-number" id="statZ10">—</div>
-            <div class="stat-label">Z10 Soarers</div>
-          </div>
-          <div class="stat-card" id="statZ20Card">
-            <div class="stat-number" id="statZ20">—</div>
-            <div class="stat-label">Z20 Soarers</div>
-          </div>
-          <div class="stat-card" id="statZ30Card">
-            <div class="stat-number" id="statZ30">—</div>
-            <div class="stat-label">Z30 / SC Models</div>
-          </div>
-          <div class="stat-card" id="statZ40Card">
-            <div class="stat-number" id="statZ40">—</div>
-            <div class="stat-label">Z40 / SC430</div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- REGISTRY SECTION -->
+    <section id="registrySection" class="registry-section">
 
-    <!-- Quick Search -->
-    <section class="quick-search-section">
-      <div class="container">
-        <h2 class="section-title">Search the Registry</h2>
-        <div class="quick-search-box">
-          <input type="text" id="heroSearch" placeholder="Search by VIN, Frame #, model, color..." class="search-input" />
-          <button class="btn btn-primary" onclick="doHeroSearch()">Search</button>
+      <!-- TOOLBAR -->
+      <div class="registry-toolbar">
+        <div class="toolbar-search-group">
+          <input
+            type="text"
+            id="regSearchInput"
+            class="toolbar-search"
+            placeholder="Search by VIN, model, color, owner&hellip;"
+            onkeydown="if(event.key==='Enter') applyHomeFilters()"
+          />
         </div>
-        <div class="quick-filters">
-          <button class="filter-chip active" onclick="filterChassis(null, this)">All Chassis</button>
-          <button class="filter-chip" onclick="filterChassis('Z10', this)">Z10 (1981–85)</button>
-          <button class="filter-chip" onclick="filterChassis('Z20', this)">Z20 (1986–91)</button>
-          <button class="filter-chip" onclick="filterChassis('Z30', this)">Z30 (1991–00)</button>
-          <button class="filter-chip" onclick="filterChassis('Z40', this)">Z40 / SC430</button>
-        </div>
-        <div id="homeCarGrid" class="car-grid"></div>
-        <div class="text-center mt-2" id="homeViewAll" style="display:none;">
-          <button class="btn btn-outline" onclick="showPage('registry')">View Full Registry</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- About banner -->
-    <section class="info-section">
-      <div class="container info-grid">
-        <div class="info-card">
-          <div class="info-icon">&#128269;</div>
-          <h3>Global Database</h3>
-          <p>Every Soarer and SC ever built, from the original Z10 to the final SC430. One record per car, worldwide.</p>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">&#128274;</div>
-          <h3>No Duplicates</h3>
-          <p>Each VIN and Frame Number is unique in our system. No double entries, no confusion.</p>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">&#128247;</div>
-          <h3>Photo Gallery</h3>
-          <p>Upload multiple photos to showcase your car. Help document the history of every chassis.</p>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">&#128101;</div>
-          <h3>Owner Accounts</h3>
-          <p>Create an account to register your car and keep your information up to date as ownership changes.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Recent additions -->
-    <section class="recent-section">
-      <div class="container">
-        <h2 class="section-title">Recently Added</h2>
-        <div id="recentCars" class="car-grid"></div>
-      </div>
-    </section>
-  </div>
-
-  <!-- REGISTRY PAGE -->
-  <div id="page-registry" class="page">
-    <div class="page-header">
-      <div class="container">
-        <h1>The Registry</h1>
-        <p id="registryCount" class="page-subtitle">Loading...</p>
-      </div>
-    </div>
-    <div class="container registry-layout">
-      <!-- Filters sidebar -->
-      <aside class="filters-sidebar">
-        <h3>Filter</h3>
-        <div class="filter-group">
-          <label>Search</label>
-          <input type="text" id="filterQ" placeholder="VIN, Frame #, model..." class="input" />
-        </div>
-        <div class="filter-group">
-          <label>Chassis</label>
-          <select id="filterChassis" class="input">
-            <option value="">All</option>
-            <option value="Z10">Z10 (1981–1985)</option>
-            <option value="Z20">Z20 (1986–1991)</option>
-            <option value="Z30">Z30 (1991–2000)</option>
-            <option value="Z40">Z40 / SC430 (2001–2010)</option>
+        <div class="toolbar-filters">
+          <select id="regFilterChassis" class="toolbar-select">
+            <option value="">All Chassis</option>
+            <option value="Z10">Z10 &mdash; 1981&ndash;85</option>
+            <option value="Z20">Z20 &mdash; 1986&ndash;91</option>
+            <option value="Z30">Z30 / SC &mdash; 1991&ndash;00</option>
+            <option value="Z40">Z40 / SC430</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label>Model</label>
-          <select id="filterModel" class="input">
-            <option value="">All Models</option>
-            <optgroup label="Z30 / SC">
-              <option value="SC300">SC300 / Soarer 3.0GT</option>
-              <option value="SC400">SC400 / Soarer 4.0GT</option>
-              <option value="Soarer 2.5GT">Soarer 2.5GT-T (1JZ)</option>
-              <option value="Soarer 2.5GT-T">Soarer 2.5GT-T Four</option>
-            </optgroup>
-            <optgroup label="Z40">
-              <option value="SC430">SC430</option>
-            </optgroup>
-            <optgroup label="Z20">
-              <option value="Soarer 2.0GT">Soarer 2.0GT</option>
-              <option value="Soarer 2.0GT-Twin Turbo">Soarer 2.0GT Twin Turbo</option>
-              <option value="Soarer 3.0GT">Soarer 3.0GT (Z20)</option>
-            </optgroup>
-            <optgroup label="Z10">
-              <option value="Soarer 2000GT">Soarer 2000GT</option>
-              <option value="Soarer 2800GT">Soarer 2800GT</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Transmission</label>
-          <select id="filterTrans" class="input">
-            <option value="">All</option>
+          <select id="regFilterTrans" class="toolbar-select">
+            <option value="">Transmission</option>
             <option value="Automatic">Automatic</option>
             <option value="Manual">Manual</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label>Drive Side</label>
-          <select id="filterDrive" class="input">
-            <option value="">All</option>
-            <option value="RHD">RHD (Right Hand Drive)</option>
-            <option value="LHD">LHD (Left Hand Drive)</option>
+          <select id="regFilterCountry" class="toolbar-select">
+            <option value="">Country</option>
+            <option value="Japan">Japan</option>
+            <option value="USA">USA</option>
+            <option value="Australia">Australia</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Canada">Canada</option>
+            <option value="Germany">Germany</option>
+            <option value="New Zealand">New Zealand</option>
+            <option value="Netherlands">Netherlands</option>
           </select>
+          <button class="btn btn-sm btn-accent" onclick="applyHomeFilters()">Search</button>
+          <button class="btn btn-sm btn-ghost" onclick="clearHomeFilters()">Clear</button>
         </div>
-        <div class="filter-group">
-          <label>Body Type</label>
-          <select id="filterBody" class="input">
-            <option value="">All</option>
-            <option value="Hardtop">Hardtop</option>
-            <option value="Sunroof">Sunroof</option>
-            <option value="Targa">Targa / Removable Roof Panel</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Year</label>
-          <input type="number" id="filterYear" placeholder="e.g. 1994" class="input" min="1981" max="2010" />
-        </div>
-        <div class="filter-group">
-          <label>Country</label>
-          <input type="text" id="filterCountry" placeholder="e.g. Japan, USA..." class="input" />
-        </div>
-        <button class="btn btn-primary btn-block" onclick="applyFilters()">Apply Filters</button>
-        <button class="btn btn-ghost btn-block mt-1" onclick="clearFilters()">Clear</button>
-      </aside>
-
-      <!-- Results -->
-      <div class="registry-results">
-        <div class="results-toolbar">
-          <span id="resultCount" class="result-count"></span>
-          <div class="view-toggle">
-            <button class="view-btn active" id="viewGrid" onclick="setView('grid', this)">&#9783; Grid</button>
-            <button class="view-btn" id="viewList" onclick="setView('list', this)">&#9776; List</button>
-          </div>
-        </div>
-        <div id="registryGrid" class="car-grid"></div>
-        <div id="registryList" class="car-list hidden"></div>
-        <div id="registryPagination" class="pagination"></div>
+        <span class="toolbar-count" id="registryResultCount"></span>
       </div>
-    </div>
-  </div>
 
-  <!-- CAR DETAIL PAGE -->
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <table class="registry-table">
+          <thead>
+            <tr>
+              <th class="th-num">#</th>
+              <th class="th-photo"></th>
+              <th>CHASSIS</th>
+              <th>MODEL</th>
+              <th>YEAR</th>
+              <th>ENGINE</th>
+              <th>COLOR</th>
+              <th>COUNTRY</th>
+              <th>OWNER</th>
+            </tr>
+          </thead>
+          <tbody id="registryTableBody">
+            <tr><td colspan="9" class="table-placeholder">Loading registry&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="registryPagination" class="pagination"></div>
+
+    </section>
+  </div><!-- /page-home -->
+
+
+  <!-- ═══════════════════════════════════════
+       CAR DETAIL PAGE
+       ═══════════════════════════════════════ -->
   <div id="page-car" class="page">
     <div id="carDetailContent"></div>
   </div>
 
-  <!-- SUBMIT / REGISTER CAR PAGE -->
+
+  <!-- ═══════════════════════════════════════
+       REGISTER A CAR
+       ═══════════════════════════════════════ -->
   <div id="page-submit" class="page">
     <div class="page-header">
-      <div class="container">
+      <div class="ph-inner">
+        <div class="ph-eyebrow">Registry</div>
         <h1>Register a Car</h1>
-        <p class="page-subtitle">Add your Soarer or SC to the global registry</p>
+        <p class="ph-sub">Add your Soarer or SC to the global database</p>
       </div>
     </div>
-    <div class="container form-container">
+
+    <div class="form-page-wrap">
       <div class="form-notice" id="submitNotice">
-        <strong>Note:</strong> You must be logged in to register a car and manage it later.
-        <a href="#" onclick="showModal('loginModal')">Log in</a> or <a href="#" onclick="showModal('registerModal')">create an account</a>.
+        <strong>Note:</strong> You must be logged in to register and manage a car.
+        <a href="#" onclick="showModal('loginModal')">Log in</a> or
+        <a href="#" onclick="showModal('registerModal')">create an account</a>.
       </div>
-      <form id="carForm" class="car-form" onsubmit="submitCar(event)">
+
+      <form id="carForm" onsubmit="submitCar(event)">
         <input type="hidden" id="editCarId" value="" />
 
-        <div class="form-section">
-          <h2 class="form-section-title">Identification</h2>
+        <!-- Section: Identification -->
+        <fieldset class="form-section">
+          <legend>Identification</legend>
           <div class="form-grid">
             <div class="form-group">
-              <label>Chassis <span class="req">*</span></label>
-              <select id="f-chassis" class="input" required onchange="updateModelOptions()">
-                <option value="">Select chassis...</option>
-                <option value="Z10">Z10 (1981–1985)</option>
-                <option value="Z20">Z20 (1986–1991)</option>
-                <option value="Z30">Z30 (1991–2000)</option>
-                <option value="Z40">Z40 / SC430 (2001–2010)</option>
+              <label for="f-chassis">Chassis <span class="req">*</span></label>
+              <select id="f-chassis" required onchange="updateModelOptions()">
+                <option value="">Select chassis&hellip;</option>
+                <option value="Z10">Z10 (1981&ndash;1985)</option>
+                <option value="Z20">Z20 (1986&ndash;1991)</option>
+                <option value="Z30">Z30 / SC (1991&ndash;2000)</option>
+                <option value="Z40">Z40 / SC430 (2001&ndash;2010)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Model <span class="req">*</span></label>
-              <select id="f-model" class="input" required>
-                <option value="">Select chassis first...</option>
+              <label for="f-model">Model <span class="req">*</span></label>
+              <select id="f-model" required>
+                <option value="">Select chassis first&hellip;</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Trim / Grade</label>
-              <input type="text" id="f-trim" class="input" placeholder="e.g. Sport Package, Anniversary Edition" />
+              <label for="f-trim">Trim / Grade</label>
+              <input type="text" id="f-trim" placeholder="e.g. Sport Package, Anniversary Edition" />
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">VIN &amp; Frame Number</h2>
-          <p class="form-hint">At least one of VIN or Frame Number is recommended. Both must be unique in the registry.</p>
+        <!-- Section: VIN & Frame -->
+        <fieldset class="form-section">
+          <legend>VIN &amp; Frame Number</legend>
+          <p class="form-hint">At least one identifier is recommended. Both must be unique in the registry.</p>
           <div class="form-grid">
             <div class="form-group">
-              <label>VIN</label>
-              <input type="text" id="f-vin" class="input" placeholder="Full VIN number" maxlength="20" style="text-transform:uppercase;" />
+              <label for="f-vin">VIN</label>
+              <input type="text" id="f-vin" placeholder="Full VIN number" maxlength="20" style="text-transform:uppercase;" />
             </div>
             <div class="form-group">
-              <label>Frame Number</label>
-              <input type="text" id="f-frame" class="input" placeholder="e.g. JZZ30-0012345" maxlength="30" style="text-transform:uppercase;" />
+              <label for="f-frame">Frame Number</label>
+              <input type="text" id="f-frame" placeholder="e.g. JZZ30-0012345" maxlength="30" style="text-transform:uppercase;" />
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">Manufacturing Details</h2>
+        <!-- Section: Manufacturing -->
+        <fieldset class="form-section">
+          <legend>Manufacturing Details</legend>
           <div class="form-grid">
             <div class="form-group">
-              <label>Production Year</label>
-              <input type="number" id="f-year" class="input" placeholder="e.g. 1994" min="1981" max="2010" />
+              <label for="f-year">Production Year</label>
+              <input type="number" id="f-year" placeholder="e.g. 1994" min="1981" max="2010" />
             </div>
             <div class="form-group">
-              <label>Production Month</label>
-              <select id="f-month" class="input">
+              <label for="f-month">Production Month</label>
+              <select id="f-month">
                 <option value="">Unknown</option>
-                <option value="1">January</option>
-                <option value="2">February</option>
-                <option value="3">March</option>
-                <option value="4">April</option>
-                <option value="5">May</option>
-                <option value="6">June</option>
-                <option value="7">July</option>
-                <option value="8">August</option>
-                <option value="9">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
+                <option value="1">January</option><option value="2">February</option>
+                <option value="3">March</option><option value="4">April</option>
+                <option value="5">May</option><option value="6">June</option>
+                <option value="7">July</option><option value="8">August</option>
+                <option value="9">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Engine</label>
-              <select id="f-engine" class="input">
+              <label for="f-engine">Engine</label>
+              <select id="f-engine">
                 <option value="">Unknown / Other</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Transmission</label>
-              <select id="f-transmission" class="input">
+              <label for="f-transmission">Transmission</label>
+              <select id="f-transmission">
                 <option value="">Unknown</option>
                 <option value="Automatic">Automatic</option>
                 <option value="Manual">Manual</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Drive Side</label>
-              <select id="f-drive" class="input">
+              <label for="f-drive">Drive Side</label>
+              <select id="f-drive">
                 <option value="">Unknown</option>
                 <option value="RHD">RHD (Right Hand Drive)</option>
                 <option value="LHD">LHD (Left Hand Drive)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Body Type</label>
-              <select id="f-body" class="input">
+              <label for="f-body">Body Type</label>
+              <select id="f-body">
                 <option value="">Unknown</option>
                 <option value="Hardtop">Hardtop</option>
                 <option value="Sunroof">Sunroof</option>
                 <option value="Targa">Targa / Removable Roof Panel</option>
+                <option value="Aerocabin">Aerocabin (Z20)</option>
+                <option value="Convertible">Retractable Hardtop (Z40)</option>
               </select>
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">Appearance</h2>
+        <!-- Section: Appearance -->
+        <fieldset class="form-section">
+          <legend>Appearance</legend>
           <div class="form-grid">
             <div class="form-group">
-              <label>Exterior Color</label>
-              <input type="text" id="f-color" class="input" placeholder="e.g. Super White, Midnight Blue" />
+              <label for="f-color">Exterior Color</label>
+              <input type="text" id="f-color" placeholder="e.g. Super White, Midnight Blue Pearl" />
             </div>
             <div class="form-group">
-              <label>Color Code</label>
-              <input type="text" id="f-color-code" class="input" placeholder="e.g. 040, 8L6" maxlength="10" />
+              <label for="f-color-code">Color Code</label>
+              <input type="text" id="f-color-code" placeholder="e.g. 040, 8L6" maxlength="10" />
+            </div>
+            <div class="form-group">
+              <label for="f-interior">Interior Color</label>
+              <input type="text" id="f-interior" placeholder="e.g. Black leather, Ivory tan" />
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">Location &amp; Ownership</h2>
+        <!-- Section: Location & Ownership -->
+        <fieldset class="form-section">
+          <legend>Location &amp; Ownership</legend>
           <div class="form-grid">
             <div class="form-group">
-              <label>Country</label>
-              <select id="f-country" class="input">
-                <option value="">Select country...</option>
+              <label for="f-country">Country</label>
+              <select id="f-country">
+                <option value="">Select country&hellip;</option>
                 <option value="Japan">Japan</option>
                 <option value="USA">USA</option>
                 <option value="Australia">Australia</option>
@@ -411,219 +322,237 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Location (State / Region / City)</label>
-              <input type="text" id="f-location" class="input" placeholder="e.g. California, Tokyo, Victoria" />
+              <label for="f-location">Location (State / Region / City)</label>
+              <input type="text" id="f-location" placeholder="e.g. California, Tokyo, Victoria" />
             </div>
             <div class="form-group">
-              <label>Current Owner Name <span class="form-optional">(optional)</span></label>
-              <input type="text" id="f-owner" class="input" placeholder="Your name or handle" />
+              <label for="f-owner">Current Owner Name <span class="opt">optional</span></label>
+              <input type="text" id="f-owner" placeholder="Your name or handle" />
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">Photos</h2>
-          <p class="form-hint">Upload up to 10 photos (JPG, PNG, WebP). Max 10MB per image. First image will be the primary photo.</p>
+        <!-- Section: Photos -->
+        <fieldset class="form-section">
+          <legend>Photos</legend>
+          <p class="form-hint">Upload up to 10 photos (JPG, PNG, WebP). The first image will be the primary photo.</p>
           <div class="upload-area" id="uploadArea">
             <input type="file" id="f-images" accept="image/*" multiple class="file-input" onchange="previewImages(event)" />
             <div class="upload-placeholder" onclick="document.getElementById('f-images').click()">
               <div class="upload-icon">&#128247;</div>
-              <p>Click to upload photos or drag and drop</p>
-              <p class="upload-hint">JPG, PNG, WebP up to 10MB each</p>
+              <p>Click to upload or drag &amp; drop</p>
+              <p class="upload-hint">JPG, PNG, WebP &mdash; max 10MB each</p>
             </div>
             <div id="imagePreviewGrid" class="image-preview-grid"></div>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="form-section">
-          <h2 class="form-section-title">Notes</h2>
+        <!-- Section: Notes -->
+        <fieldset class="form-section">
+          <legend>Notes</legend>
           <div class="form-group">
-            <textarea id="f-notes" class="input textarea" rows="4" placeholder="Any additional information about this car — modifications, history, provenance..."></textarea>
+            <textarea id="f-notes" rows="4" placeholder="Modifications, history, provenance, or any other relevant information&hellip;"></textarea>
           </div>
-        </div>
+        </fieldset>
 
+        <!-- Actions -->
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">Register Car</button>
+          <button type="submit" class="btn btn-accent btn-lg" id="submitBtn">Register Car</button>
           <button type="button" class="btn btn-ghost btn-lg" onclick="cancelEdit()">Cancel</button>
         </div>
-        <div id="formError" class="form-error hidden"></div>
-        <div id="formSuccess" class="form-success hidden"></div>
+        <div id="formError" class="alert alert-error hidden"></div>
+        <div id="formSuccess" class="alert alert-success hidden"></div>
       </form>
     </div>
-  </div>
+  </div><!-- /page-submit -->
 
-  <!-- PROFILE / MY CARS PAGE -->
+
+  <!-- ═══════════════════════════════════════
+       PROFILE / MY GARAGE
+       ═══════════════════════════════════════ -->
   <div id="page-profile" class="page">
     <div class="page-header">
-      <div class="container">
+      <div class="ph-inner">
+        <div class="ph-eyebrow">Account</div>
         <h1 id="profileName">My Garage</h1>
-        <p class="page-subtitle" id="profileSub"></p>
+        <p class="ph-sub" id="profileSub"></p>
       </div>
     </div>
-    <div class="container">
-      <div class="profile-layout">
-        <div class="profile-sidebar">
-          <div class="profile-card">
-            <div class="profile-avatar" id="profileAvatar"></div>
-            <div id="profileInfo"></div>
-          </div>
-          <button class="btn btn-outline btn-block mt-1" onclick="showPage('submit')">+ Register a Car</button>
+    <div class="profile-wrap">
+      <aside class="profile-sidebar">
+        <div class="profile-avatar-block">
+          <div class="profile-avatar" id="profileAvatar"></div>
+          <div id="profileInfo"></div>
         </div>
-        <div class="profile-cars">
-          <h2>My Cars</h2>
-          <div id="profileCarGrid" class="car-grid"></div>
-        </div>
+        <button class="btn btn-accent btn-block" onclick="showPage('submit')">+ Register a Car</button>
+      </aside>
+      <div class="profile-main">
+        <h2 class="profile-cars-title">My Cars</h2>
+        <div id="profileCarGrid" class="profile-car-grid"></div>
       </div>
     </div>
   </div>
 
-  <!-- ABOUT PAGE -->
+
+  <!-- ═══════════════════════════════════════
+       ABOUT PAGE
+       ═══════════════════════════════════════ -->
   <div id="page-about" class="page">
     <div class="page-header">
-      <div class="container">
-        <h1>About the Registry</h1>
+      <div class="ph-inner">
+        <div class="ph-eyebrow">The Registry</div>
+        <h1>About</h1>
       </div>
     </div>
-    <div class="container about-content">
-      <div class="about-text">
-        <h2>Why This Registry Exists</h2>
-        <p>The Toyota Soarer and Lexus SC are among the most iconic Japanese grand tourers ever produced. From the original Z10 in 1981 through to the final SC430 in 2010, these cars represent nearly three decades of Toyota's commitment to luxury performance.</p>
-        <p>The Soarer Registry is a community-driven project to document every surviving example in the world — building a permanent, searchable record for owners, historians, and enthusiasts alike.</p>
+    <div class="about-wrap">
 
-        <h2>The Chassis Generations</h2>
+      <section class="about-section">
+        <h2>Why This Registry Exists</h2>
+        <p>The Toyota Soarer and Lexus SC are among the most iconic Japanese grand tourers ever built. From the original Z10 in 1981 through the final SC430 in 2010 — nearly three decades of Toyota's vision for the perfect GT car.</p>
+        <p>The Soarer Registry is a community project to document every surviving example in the world, building a permanent searchable record for owners, historians, and enthusiasts.</p>
+      </section>
+
+      <section class="about-section">
+        <h2>Chassis Generations</h2>
         <div class="chassis-grid">
           <div class="chassis-card">
-            <h3>Z10 <span class="year-badge">1981–1985</span></h3>
-            <p>The original Soarer. Available with 2.0L (2M), 2.8L (5M-GE), and later 3.0L engines. Set the template for the grand tourer formula.</p>
+            <div class="chassis-label">Z10</div>
+            <div class="chassis-years">1981 &mdash; 1985</div>
+            <p>The original Soarer. Defined the grand tourer formula for Japan with straight-six engines and a clean wedge profile.</p>
             <ul>
-              <li>2000GT — 1G-EU 2.0L I6</li>
-              <li>2000GT-Extra — 1G-GEU 2.0L DOHC</li>
-              <li>2800GT — 5M-GEU 2.8L I6</li>
-              <li>3000GT — 6M-GEU 3.0L I6</li>
+              <li>2000GT &mdash; 1G-EU 2.0L I6</li>
+              <li>2000GT-Extra &mdash; 1G-GEU DOHC</li>
+              <li>2800GT &mdash; 5M-GEU 2.8L</li>
+              <li>3000GT &mdash; 6M-GEU 3.0L</li>
             </ul>
           </div>
           <div class="chassis-card">
-            <h3>Z20 <span class="year-badge">1986–1991</span></h3>
-            <p>The second generation brought twin-turbo technology. Known for its futuristic dash and being the first Japanese production car with a digital instrument cluster.</p>
+            <div class="chassis-label">Z20</div>
+            <div class="chassis-years">1986 &mdash; 1991</div>
+            <p>Twin-turbo technology arrived. First Japanese production car with a fully digital instrument cluster. Aerocabin variant was extremely rare.</p>
             <ul>
-              <li>2.0GT — 1G-GEU 2.0L DOHC</li>
-              <li>2.0GT Twin Turbo — 1G-GTEU 2.0L TT</li>
-              <li>3.0GT — 7M-GEU 3.0L DOHC</li>
-              <li>3.0GT Twin Turbo — 7M-GTEU 3.0L TT</li>
+              <li>2.0GT &mdash; 1G-GEU DOHC</li>
+              <li>2.0GT Twin Turbo &mdash; 1G-GTEU</li>
+              <li>3.0GT &mdash; 7M-GEU DOHC</li>
+              <li>3.0GT Twin Turbo &mdash; 7M-GTEU</li>
             </ul>
           </div>
-          <div class="chassis-card z30-card">
-            <h3>Z30 <span class="year-badge">1991–2000</span></h3>
-            <p>The most iconic generation. Sold as the <strong>Lexus SC300/SC400</strong> in export markets. This is the primary focus of the registry.</p>
+          <div class="chassis-card chassis-z30">
+            <div class="chassis-label">Z30</div>
+            <div class="chassis-years">1991 &mdash; 2000</div>
+            <p>The definitive Soarer. Sold globally as the <strong>Lexus SC300 &amp; SC400</strong>. Pop culture icon. The primary focus of this registry.</p>
             <ul>
-              <li>SC300 / 3.0GT — 2JZ-GE 3.0L NA</li>
-              <li>SC400 / 4.0GT — 1UZ-FE 4.0L V8</li>
-              <li>Soarer 2.5GT-T — 1JZ-GTE 2.5L TT</li>
-              <li>Soarer 2.5GT-T Four — 1JZ-GTE AWD</li>
+              <li>SC300 &mdash; 2JZ-GE 3.0L NA</li>
+              <li>SC400 &mdash; 1UZ-FE 4.0L V8</li>
+              <li>Soarer 2.5GT-T &mdash; 1JZ-GTE</li>
+              <li>Soarer 2.5GT-T Four &mdash; AWD</li>
             </ul>
           </div>
           <div class="chassis-card">
-            <h3>Z40 / SC430 <span class="year-badge">2001–2010</span></h3>
-            <p>The final chapter. The SC430 moved to a retractable hardtop design with a 4.3L V8. A luxury grand tourer in a different mold.</p>
+            <div class="chassis-label">Z40</div>
+            <div class="chassis-years">2001 &mdash; 2010</div>
+            <p>The final chapter. Retractable hardtop grand tourer with the 3UZ-FE V8. A refined luxury-first evolution.</p>
             <ul>
-              <li>SC430 — 3UZ-FE 4.3L V8</li>
-              <li>Available in hardtop only (retractable)</li>
-              <li>LHD export (Lexus) and RHD domestic</li>
+              <li>SC430 &mdash; 3UZ-FE 4.3L V8</li>
+              <li>Retractable hardtop only</li>
+              <li>LHD (Lexus) and RHD domestic</li>
             </ul>
           </div>
         </div>
+      </section>
 
+      <section class="about-section">
         <h2>How It Works</h2>
         <ol>
-          <li><strong>Create an account</strong> — free and quick</li>
-          <li><strong>Register your car</strong> — fill in as much detail as you know</li>
-          <li><strong>Upload photos</strong> — help document the car for history</li>
-          <li><strong>Update anytime</strong> — keep information accurate as things change</li>
+          <li><strong>Create an account</strong> &mdash; free and instant</li>
+          <li><strong>Register your car</strong> &mdash; fill in as much detail as you have</li>
+          <li><strong>Upload photos</strong> &mdash; document each car for history</li>
+          <li><strong>Update anytime</strong> &mdash; keep information accurate as ownership changes</li>
         </ol>
-        <p>VIN and Frame Numbers are unique identifiers in the registry — no two entries can share the same number, ensuring the integrity of the data.</p>
+        <p>VINs and Frame Numbers are unique identifiers. No duplicate entries are allowed, ensuring the integrity of every record.</p>
+      </section>
 
+      <section class="about-section">
         <h2>Contributing</h2>
-        <p>If you know of a Soarer or SC that is not yet in the registry, you can register it even if you are not the owner. Use "current owner name" to credit the correct person. The registry is a community resource for everyone.</p>
-      </div>
+        <p>If you know of a Soarer or SC not yet in the registry, you can register it even if you are not the owner. Use the "Current Owner Name" field to credit the right person. The registry belongs to the community.</p>
+        <div class="about-cta">
+          <button class="btn btn-accent" onclick="showPage('submit')">Register a Car</button>
+          <button class="btn btn-outline" onclick="scrollToRegistry()">Browse the Registry</button>
+        </div>
+      </section>
+
     </div>
   </div>
 
-</main>
+</main><!-- /app -->
 
 <!-- FOOTER -->
-<footer class="footer">
-  <div class="container footer-inner">
-    <div class="footer-brand">THE SOARER REGISTRY</div>
-    <p class="footer-copy">A community project to document every Toyota Soarer &amp; Lexus SC in existence.</p>
-    <div class="footer-links">
-      <a href="#" onclick="showPage('home')">Home</a>
-      <a href="#" onclick="showPage('registry')">Registry</a>
-      <a href="#" onclick="showPage('submit')">Register a Car</a>
-      <a href="#" onclick="showPage('about')">About</a>
-    </div>
-  </div>
-</footer>
+<div id="footer-root"></div>
 
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event, 'loginModal')">
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- LOGIN -->
+<div id="loginModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event,'loginModal')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
-    <h2>Log In</h2>
+    <h2 class="modal-title">Member Login</h2>
     <form onsubmit="doLogin(event)">
       <div class="form-group">
-        <label>Username or Email</label>
-        <input type="text" id="loginUser" class="input" autocomplete="username" required />
+        <label for="loginUser">Username or Email</label>
+        <input type="text" id="loginUser" autocomplete="username" required />
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPass" class="input" autocomplete="current-password" required />
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required />
       </div>
-      <div id="loginError" class="form-error hidden"></div>
-      <button type="submit" class="btn btn-primary btn-block mt-1">Log In</button>
-      <p class="modal-switch">Don't have an account? <a href="#" onclick="switchModal('loginModal','registerModal')">Sign up</a></p>
+      <div id="loginError" class="alert alert-error hidden"></div>
+      <button type="submit" class="btn btn-accent btn-block" style="margin-top:16px;">Log In</button>
     </form>
+    <p class="modal-switch">No account? <a href="#" onclick="switchModal('loginModal','registerModal')">Join the Registry &rarr;</a></p>
   </div>
 </div>
 
-<!-- REGISTER MODAL -->
-<div id="registerModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event, 'registerModal')">
+<!-- REGISTER -->
+<div id="registerModal" class="modal-backdrop hidden" onclick="closeModalBackdrop(event,'registerModal')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('registerModal')">&times;</button>
-    <h2>Create Account</h2>
+    <h2 class="modal-title">Join the Registry</h2>
     <form onsubmit="doRegister(event)">
       <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="regUser" class="input" autocomplete="username" minlength="3" maxlength="30" required />
+        <label for="regUser">Username</label>
+        <input type="text" id="regUser" autocomplete="username" minlength="3" maxlength="30" required />
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="regEmail" class="input" autocomplete="email" required />
+        <label for="regEmail">Email</label>
+        <input type="email" id="regEmail" autocomplete="email" required />
       </div>
       <div class="form-group">
-        <label>Display Name <span class="form-optional">(optional)</span></label>
-        <input type="text" id="regDisplay" class="input" />
+        <label for="regDisplay">Display Name <span class="opt">optional</span></label>
+        <input type="text" id="regDisplay" />
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="regPass" class="input" autocomplete="new-password" minlength="8" required />
+        <label for="regPass">Password</label>
+        <input type="password" id="regPass" autocomplete="new-password" minlength="8" required />
       </div>
-      <div id="regError" class="form-error hidden"></div>
-      <button type="submit" class="btn btn-primary btn-block mt-1">Create Account</button>
-      <p class="modal-switch">Already have an account? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in</a></p>
+      <div id="regError" class="alert alert-error hidden"></div>
+      <button type="submit" class="btn btn-accent btn-block" style="margin-top:16px;">Create Account</button>
     </form>
+    <p class="modal-switch">Already a member? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in &rarr;</a></p>
   </div>
 </div>
 
-<!-- IMAGE LIGHTBOX -->
+<!-- ═══════════════════ LIGHTBOX ═══════════════════ -->
 <div id="lightbox" class="lightbox hidden" onclick="closeLightbox()">
   <img id="lightboxImg" src="" alt="Car photo" />
-  <div id="lightboxCaption"></div>
-  <button class="lightbox-prev" onclick="event.stopPropagation(); lightboxNav(-1)">&#8249;</button>
-  <button class="lightbox-next" onclick="event.stopPropagation(); lightboxNav(1)">&#8250;</button>
-  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <div id="lightboxCaption" class="lightbox-caption"></div>
+  <button class="lb-btn lb-prev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
+  <button class="lb-btn lb-next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
+  <button class="lb-close" onclick="closeLightbox()">&times;</button>
 </div>
 
+<!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/components.js"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 </body>
