@@ -221,10 +221,10 @@ textarea { resize: vertical; }
   flex-shrink: 0;
 }
 .nav-brand-text {
-  font-family: var(--font-head);
+  font-family: 'Poppins', sans-serif;
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--white);
 }
 .nav-links {
