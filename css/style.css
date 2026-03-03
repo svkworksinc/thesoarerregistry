@@ -288,7 +288,7 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   overflow: hidden;
-  background-image: url('../img/containerbg.jpeg');
+  background-image: url('../img/containerbg.png');
   background-size: cover;
   background-position: bottom;
   background-attachment: fixed;
