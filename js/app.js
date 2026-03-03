@@ -563,8 +563,8 @@ function renderCarDetail(car) {
           <div class="info-panel">
             <div class="info-panel-title">Specification</div>
             ${row('Engine', car.engine)}
-            ${row('Transmission', car.transmission)}
-            ${row('Gear Shift', car.gear_shift)}
+            ${row('Transmission Type', car.transmission)}
+            ${row('Transmission', car.gear_shift)}
             ${row('Fuel System', car.fuel_system)}
             ${row('Driver Position', car.drive_side)}
           </div>
@@ -764,7 +764,7 @@ function updateModelOptions() {
 
   modelSel.innerHTML  = '<option value="">Select model&hellip;</option>' +
     models.map(m => `<option value="${escAttr(m)}">${escHtml(m)}</option>`).join('');
-  engineSel.innerHTML = '<option value="">Unknown / Other</option>' +
+  engineSel.innerHTML = '<option value=""></option>' +
     engines.map(e => `<option value="${escAttr(e)}">${escHtml(e)}</option>`).join('');
 }
 
@@ -1005,7 +1005,7 @@ function resetForm() {
   const modelSel  = document.getElementById('f-model');
   const engineSel = document.getElementById('f-engine');
   if (modelSel)  modelSel.innerHTML  = '<option value="">Select chassis first&hellip;</option>';
-  if (engineSel) engineSel.innerHTML = '<option value="">Unknown / Other</option>';
+  if (engineSel) engineSel.innerHTML = '<option value=""></option>';
 }
 
 function cancelEdit() {
