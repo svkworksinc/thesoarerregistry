@@ -7,7 +7,7 @@
   <meta name="description" content="Documenting every Toyota Soarer and Lexus SC in existence. One car. One record. Forever." />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body>
 
@@ -204,14 +204,14 @@
         <!-- Section: VIN & Frame -->
         <fieldset class="form-section">
           <legend>VIN &amp; Frame Number</legend>
-          <p class="form-hint">At least one identifier is recommended. Both must be unique in the registry.</p>
+          <p class="form-hint"><span class="req">*</span> At least one of VIN or Frame Number is <strong>required</strong>. Both must be unique in the registry.</p>
           <div class="form-grid">
             <div class="form-group">
-              <label for="f-vin">VIN</label>
+              <label for="f-vin">VIN <span class="req">*</span></label>
               <input type="text" id="f-vin" placeholder="Full VIN number" maxlength="20" style="text-transform:uppercase;" />
             </div>
             <div class="form-group">
-              <label for="f-frame">Frame Number</label>
+              <label for="f-frame">Frame Number <span class="req">*</span></label>
               <input type="text" id="f-frame" placeholder="e.g. JZZ30-0012345" maxlength="30" style="text-transform:uppercase;" />
             </div>
           </div>
@@ -351,7 +351,7 @@
         <fieldset class="form-section">
           <legend>Notes</legend>
           <div class="form-group">
-            <textarea id="f-notes" rows="4" placeholder="Modifications, history, provenance, or any other relevant information&hellip;"></textarea>
+            <textarea id="f-notes" rows="4" maxlength="2000" placeholder="Modifications, history, provenance, or any other relevant information&hellip;"></textarea>
           </div>
         </fieldset>
 

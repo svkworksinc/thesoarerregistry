@@ -30,6 +30,18 @@ let lightboxIndex  = 0;
 let pendingFiles   = [];
 let registryPage   = 1;
 
+// ── SHARED HELPERS ────────────────────────────────────────
+/** Returns "Jan 1994" or "1994" or "" */
+function formatYear(mfg_year, mfg_month) {
+  if (!mfg_year) return '';
+  return mfg_month ? `${MONTHS[mfg_month - 1]} ${mfg_year}` : `${mfg_year}`;
+}
+
+/** Returns CSS class for chassis badge, e.g. "tag-z30" */
+function chassisTagClass(chassis) {
+  return `tag-${(chassis || '').toLowerCase()}`;
+}
+
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   checkSetup();
@@ -48,8 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await db.auth.getSession();
 
-  loadStats();
-  loadRegistryTable(1);
+  // Run independent fetches in parallel
+  Promise.all([loadStats(), loadRegistryTable(1)]);
   setupDragDrop();
   handleHashNav();
 });
@@ -335,7 +347,6 @@ function carRowHTML(car, index) {
     ? `<img src="${escAttr(car.primary_image_url)}" alt="${escAttr(car.model)}" loading="lazy" />`
     : '<span class="no-thumb">—</span>';
 
-  const chassisClass = `tag-${(car.chassis || '').toLowerCase()}`;
   const engine = car.engine ? car.engine.split('(')[0].trim() : '—';
   const owner  = car.profiles?.display_name
     || car.profiles?.username
@@ -346,9 +357,9 @@ function carRowHTML(car, index) {
     <tr class="registry-row" onclick="showCarDetail(${car.id})">
       <td class="td-num">${index}</td>
       <td class="td-photo"><div class="row-thumb">${thumb}</div></td>
-      <td><span class="chassis-tag ${chassisClass}">${escHtml(car.chassis)}</span></td>
+      <td><span class="chassis-tag ${chassisTagClass(car.chassis)}">${escHtml(car.chassis)}</span></td>
       <td class="td-model">${escHtml(car.model)}</td>
-      <td>${car.mfg_year || '—'}</td>
+      <td class="td-year">${car.mfg_year || '—'}</td>
       <td class="td-engine">${escHtml(engine)}</td>
       <td>${car.color ? escHtml(car.color) : '—'}</td>
       <td>${car.country ? escHtml(car.country) : '—'}</td>
@@ -433,9 +444,7 @@ function renderCarDetail(car) {
   lightboxIndex  = 0;
 
   const isOwner = currentUser && car.user_id === currentUser.id;
-  const year    = car.mfg_year
-    ? (car.mfg_month ? `${MONTHS[car.mfg_month - 1]} ${car.mfg_year}` : `${car.mfg_year}`)
-    : '';
+  const year    = formatYear(car.mfg_year, car.mfg_month);
 
   const mainImg = images.length
     ? `<img id="galleryMain" src="${escAttr(images[0].public_url)}" alt="${escAttr(car.model)}" onclick="openLightbox(0)" />`
@@ -457,7 +466,6 @@ function renderCarDetail(car) {
   };
 
   const profiles = car.profiles || {};
-  const chassisClass = `tag-${(car.chassis || '').toLowerCase()}`;
 
   document.getElementById('carDetailContent').innerHTML = `
     <div class="car-detail-header">
@@ -467,7 +475,7 @@ function renderCarDetail(car) {
           &rsaquo; ${escHtml(car.chassis)}
           &rsaquo; ${escHtml(car.model)}
         </div>
-        <span class="chassis-tag ${chassisClass}" style="margin-bottom:10px;display:inline-block;">
+        <span class="chassis-tag ${chassisTagClass(car.chassis)}" style="margin-bottom:10px;display:inline-block;">
           ${escHtml(car.chassis)}
         </span>
         <h1 class="car-detail-title">
@@ -506,7 +514,8 @@ function renderCarDetail(car) {
           <div class="info-panel-title">Production</div>
           ${row('Year', car.mfg_year ? String(car.mfg_year) : null)}
           ${row('Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
-          ${row('Color', car.color ? `${car.color}${car.color_code ? ` (${car.color_code})` : ''}` : null)}
+          ${row('Exterior Color', car.color ? `${car.color}${car.color_code ? ` (${car.color_code})` : ''}` : null)}
+          ${car.interior_color ? row('Interior Color', car.interior_color) : ''}
         </div>
 
         <div class="info-panel">
@@ -621,13 +630,16 @@ async function submitCar(e) {
   const isEdit = !!editId;
   const get = id => document.getElementById(id)?.value || '';
 
+  const rawVin   = get('f-vin').trim().toUpperCase()   || null;
+  const rawFrame = get('f-frame').trim().toUpperCase() || null;
+
   const carData = {
     user_id:            currentUser.id,
     chassis:            get('f-chassis'),
     model:              get('f-model'),
     trim:               get('f-trim')          || null,
-    vin:                get('f-vin').trim().toUpperCase()   || null,
-    frame_number:       get('f-frame').trim().toUpperCase() || null,
+    vin:                rawVin,
+    frame_number:       rawFrame,
     mfg_year:           parseInt(get('f-year'))  || null,
     mfg_month:          parseInt(get('f-month')) || null,
     engine:             get('f-engine')        || null,
@@ -636,6 +648,7 @@ async function submitCar(e) {
     body_type:          get('f-body')          || null,
     color:              get('f-color')         || null,
     color_code:         get('f-color-code')    || null,
+    interior_color:     get('f-interior')      || null,
     country:            get('f-country')       || null,
     location:           get('f-location')      || null,
     current_owner_name: get('f-owner')         || null,
@@ -644,6 +657,10 @@ async function submitCar(e) {
 
   if (!carData.chassis || !carData.model) {
     errEl.textContent = 'Chassis and Model are required.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (!rawVin && !rawFrame) {
+    errEl.textContent = 'A VIN or Frame Number is required to register a car.';
     errEl.classList.remove('hidden'); return;
   }
 
@@ -665,28 +682,28 @@ async function submitCar(e) {
       carId = data.id;
     }
 
-    // Upload new images
+    // Upload new images in parallel
     if (pendingFiles.length) {
       const { count: existingCount } = await db.from('car_images')
         .select('*', { count: 'exact', head: true }).eq('car_id', carId);
-      let makePrimary = (existingCount || 0) === 0;
+      const firstIsPrimary = (existingCount || 0) === 0;
 
-      for (const file of pendingFiles) {
+      await Promise.all(pendingFiles.map(async (file, i) => {
         try {
           const ext  = file.name.split('.').pop().toLowerCase() || 'jpg';
           const path = `${currentUser.id}/${carId}/${crypto.randomUUID()}.${ext}`;
           const { error: upErr } = await db.storage.from('car-images').upload(path, file);
-          if (upErr) continue;
+          if (upErr) return;
           const { data: { publicUrl } } = db.storage.from('car-images').getPublicUrl(path);
+          const isPrimary = firstIsPrimary && i === 0;
           await db.from('car_images').insert({
-            car_id: carId, storage_path: path, public_url: publicUrl, is_primary: makePrimary
+            car_id: carId, storage_path: path, public_url: publicUrl, is_primary: isPrimary
           });
-          if (makePrimary) {
+          if (isPrimary) {
             await db.from('cars').update({ primary_image_url: publicUrl }).eq('id', carId);
-            makePrimary = false;
           }
         } catch {}
-      }
+      }));
     }
 
     successEl.textContent = isEdit ? 'Car updated successfully!' : 'Car registered successfully!';
@@ -729,13 +746,14 @@ async function editCar(id) {
       const el = document.getElementById(elId);
       if (el) el.value = val || '';
     };
-    set('f-model',        car.model);        set('f-trim',     car.trim);
-    set('f-vin',          car.vin);          set('f-frame',    car.frame_number);
-    set('f-year',         car.mfg_year);     set('f-month',    car.mfg_month);
+    set('f-model',        car.model);        set('f-trim',         car.trim);
+    set('f-vin',          car.vin);          set('f-frame',        car.frame_number);
+    set('f-year',         car.mfg_year);     set('f-month',        car.mfg_month);
     set('f-engine',       car.engine);       set('f-transmission', car.transmission);
-    set('f-drive',        car.drive_side);   set('f-body',     car.body_type);
-    set('f-color',        car.color);        set('f-color-code', car.color_code);
-    set('f-country',      car.country);      set('f-location', car.location);
+    set('f-drive',        car.drive_side);   set('f-body',         car.body_type);
+    set('f-color',        car.color);        set('f-color-code',   car.color_code);
+    set('f-interior',     car.interior_color);
+    set('f-country',      car.country);      set('f-location',     car.location);
     set('f-owner',        car.current_owner_name);
     set('f-notes',        car.notes);
 
@@ -904,9 +922,7 @@ function carCardHTML(car) {
     ? `<img src="${escAttr(car.primary_image_url)}" alt="${escAttr(car.model)}" loading="lazy" />`
     : `<div class="car-card-no-image">&#128663;</div>`;
 
-  const year = car.mfg_year
-    ? (car.mfg_month ? `${MONTHS[car.mfg_month - 1]} ${car.mfg_year}` : `${car.mfg_year}`)
-    : '';
+  const year = formatYear(car.mfg_year, car.mfg_month);
 
   const tags = [car.transmission, car.drive_side, car.body_type,
                 car.engine ? car.engine.split(' ')[0] : null].filter(Boolean);

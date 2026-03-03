@@ -6,34 +6,43 @@
 
 /* ── TOKENS ────────────────────────────────────────────── */
 :root {
-  --bg:          #08080e;
-  --bg-2:        #0d0e16;
-  --bg-3:        #12131c;
-  --bg-4:        #181924;
-  --bg-5:        #1e2030;
+  --bg:          #07070d;
+  --bg-2:        #0b0c18;
+  --bg-3:        #10111e;
+  --bg-4:        #161728;
+  --bg-5:        #1c1e32;
 
-  --accent:      #4a7ec2;
-  --accent-hi:   #6ba0e6;
-  --accent-lo:   rgba(74, 126, 194, 0.12);
-  --accent-glow: rgba(74, 126, 194, 0.3);
+  /* More vivid blue accent */
+  --accent:      #5090f8;
+  --accent-hi:   #80b4ff;
+  --accent-lo:   rgba(80, 144, 248, 0.13);
+  --accent-glow: rgba(80, 144, 248, 0.38);
 
-  --text:        #b0b4c0;
-  --text-muted:  #50546a;
-  --text-bright: #dde0ea;
-  --white:       #eef0f8;
+  /* Brighter, less grey text */
+  --text:        #c4c8dc;
+  --text-muted:  #6878a8;
+  --text-bright: #e8ecf8;
+  --white:       #f2f5ff;
 
-  --border:      #1a1c28;
-  --border-lo:   #232538;
+  --border:      #1e2040;
+  --border-lo:   #282c4a;
 
-  --danger:      #b83030;
-  --success:     #28804a;
+  --danger:      #d04040;
+  --success:     #30a060;
 
-  --font-head:   'Rajdhani', sans-serif;
+  /* Data-type colors for table columns */
+  --col-year:    #80b4ff;
+  --col-engine:  #e8a030;
+  --col-owner:   #40d090;
+
+  /* Space Grotesk: geometric, readable, still technical */
+  --font-head:   'Space Grotesk', sans-serif;
   --font-display:'Orbitron', sans-serif;
-  --font-body:   'Inter', sans-serif;
+  --font-body:   'Space Grotesk', sans-serif;
   --font-mono:   'JetBrains Mono', 'Consolas', monospace;
 
   --radius:      4px;
+  --radius-sm:   2px;
   --nav-h:       60px;
   --trans:       0.18s ease;
 }
@@ -105,8 +114,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition: background var(--trans), border-color var(--trans), color var(--trans), box-shadow var(--trans);
   white-space: nowrap;
@@ -172,6 +180,7 @@ textarea { resize: vertical; }
   top: 0; left: 0; right: 0;
   z-index: 1000;
   background: #000;
+  border-top: 2px solid var(--accent);
   border-bottom: 1px solid var(--border);
   height: var(--nav-h);
 }
@@ -227,8 +236,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--text);
   padding: 6px 12px;
   border-radius: var(--radius);
@@ -332,7 +340,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.15em;
   color: var(--accent-hi);
   text-transform: uppercase;
   margin-bottom: 18px;
@@ -414,7 +422,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -508,9 +516,9 @@ textarea { resize: vertical; }
 }
 .registry-table th {
   font-family: var(--font-head);
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 11px 14px;
@@ -543,9 +551,10 @@ textarea { resize: vertical; }
   padding: 10px 8px;
 }
 .td-photo { padding: 6px 10px; }
-.td-model { color: var(--text-bright); font-weight: 500; }
-.td-engine { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
-.td-owner { color: var(--accent-hi); font-size: 12px; }
+.td-model  { color: var(--white); font-weight: 600; }
+.td-year   { color: var(--col-year); font-weight: 500; }
+.td-engine { font-family: var(--font-mono); font-size: 12px; color: var(--col-engine); }
+.td-owner  { color: var(--col-owner); font-size: 12px; font-weight: 500; }
 
 /* Row thumbnail */
 .row-thumb {
@@ -572,10 +581,10 @@ textarea { resize: vertical; }
   border-radius: 2px;
   white-space: nowrap;
 }
-.tag-z10 { background: rgba(160,90,0,.2);  color: #d49040; border: 1px solid rgba(212,144,64,.3); }
-.tag-z20 { background: rgba(60,140,40,.2); color: #7cc44a; border: 1px solid rgba(124,196,74,.3); }
-.tag-z30 { background: rgba(74,126,194,.2);color: #6ba0e6; border: 1px solid rgba(107,160,230,.3);}
-.tag-z40 { background: rgba(150,40,150,.2);color: #d470d4; border: 1px solid rgba(212,112,212,.3);}
+.tag-z10 { background: rgba(240,140,0,.18);   color: #f0aa40; border: 1px solid rgba(240,170,64,.45); }
+.tag-z20 { background: rgba(40,210,70,.15);   color: #48e070; border: 1px solid rgba(72,224,112,.45); }
+.tag-z30 { background: rgba(80,144,248,.18);  color: #80b4ff; border: 1px solid rgba(128,180,255,.45);}
+.tag-z40 { background: rgba(210,60,210,.18);  color: #e878e8; border: 1px solid rgba(232,120,232,.45);}
 
 /* Table states */
 .table-placeholder, .table-empty {
@@ -637,18 +646,17 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-hi);
   margin-bottom: 8px;
 }
 .page-header h1 {
   font-family: var(--font-head);
   font-size: 32px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   color: var(--white);
-  text-transform: uppercase;
   line-height: 1.1;
 }
 .ph-sub {
@@ -688,7 +696,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent-hi);
   padding: 0 8px;
@@ -702,10 +710,9 @@ textarea { resize: vertical; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label {
   font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
 }
 .req { color: var(--accent-hi); }
@@ -852,10 +859,10 @@ textarea { resize: vertical; }
   font-size: 10px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: rgba(0,0,0,.75);
   color: var(--accent-hi);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   border: 1px solid rgba(107,160,230,.35);
 }
 .car-card-body { padding: 13px; }
@@ -863,10 +870,9 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-bright);
+  color: var(--white);
   margin-bottom: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
 }
 .car-card-year { font-size: 12px; color: var(--accent-hi); margin-bottom: 8px; }
 .car-card-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
@@ -1029,11 +1035,11 @@ textarea { resize: vertical; }
 }
 .info-panel-title {
   font-family: var(--font-head);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--accent-hi);
   padding: 9px 14px 8px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-4);
@@ -1077,8 +1083,7 @@ textarea { resize: vertical; }
   font-family: var(--font-head);
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--white);
   margin-bottom: 16px;
   padding-bottom: 8px;
@@ -1279,21 +1284,10 @@ textarea { resize: vertical; }
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--white);
 }
 .footer-tag { font-size: 11px; color: var(--text-muted); }
-.footer-nav { display: flex; gap: 18px; }
-.footer-nav a {
-  font-family: var(--font-head);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  transition: color var(--trans);
-}
-.footer-nav a:hover { color: var(--white); }
 .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .footer-copy { font-size: 12px; color: var(--text-muted); }
 .footer-disc { font-size: 10px; color: var(--text-muted); opacity: 0.5; }
