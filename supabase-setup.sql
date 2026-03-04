@@ -196,49 +196,100 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS verification      TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS vin_matched       BOOLEAN DEFAULT NULL;
 
 -- Extended vehicle data (from combined CSV sources)
+-- Column names match the CSV headers exactly for easy import.
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS make                  TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS manufacturer          TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS model_code            TEXT;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS production_from       TEXT;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS production_to         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS model_name            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS series                TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS prod_from             TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS prod_to               TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS frame_short           TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS year_month            TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_city            TEXT;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_company         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_company_name    TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_country         TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_state           TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_cc       INTEGER;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_cid      TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_ci       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_l        TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_configuration  TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_cylinders      INTEGER;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_hp             INTEGER;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_make           TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_hp_to          INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_manufacturer   TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_model          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS model_year            INTEGER;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS doors                 INTEGER;
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS airbag_location       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS air_bag_loc_front     TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission_speeds   TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission_style    TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS searched_vin          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS vin_star              TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS chars_bottom          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS additional_error_text TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS possible_values       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS suggested_vin         TEXT;
 
--- Extend the VIN directory with the same additional fields
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                 TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer         TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS model_code           TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS production_from      TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS production_to        TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS grade                TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS market               TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS destination          TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS trim_code            TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant                TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_city           TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_company        TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_country        TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_state          TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_cc      INTEGER;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_cid     TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_configuration TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_cylinders     INTEGER;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_hp            INTEGER;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_make          TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_model         TEXT;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS doors                INTEGER;
-ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS airbag_location      TEXT;
+-- If migrating from an older schema where columns had different names,
+-- rename them to match the CSV convention (DO blocks skip if already renamed).
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='production_from')  THEN ALTER TABLE cars RENAME COLUMN production_from  TO prod_from;          END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='production_to')    THEN ALTER TABLE cars RENAME COLUMN production_to    TO prod_to;            END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='displacement_cid') THEN ALTER TABLE cars RENAME COLUMN displacement_cid  TO displacement_ci;    END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='engine_make')      THEN ALTER TABLE cars RENAME COLUMN engine_make       TO engine_manufacturer;END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='plant_company')    THEN ALTER TABLE cars RENAME COLUMN plant_company     TO plant_company_name; END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='airbag_location')  THEN ALTER TABLE cars RENAME COLUMN airbag_location   TO air_bag_loc_front;  END IF;
+END $$;
+
+-- Extend the VIN directory with the same columns (all CSV headers present).
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS searched_vin          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS vin_star              TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS model_code            TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS prod_from             TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS prod_to               TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS frame_short           TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS market                TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS year_month            TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                  TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS model_name            TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS chars_bottom          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS destination           TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS grade                 TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS trim_code             TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS additional_error_text TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS air_bag_loc_front     TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_cc       INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_ci       TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_l        TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS doors                 INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_configuration  TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_cylinders      INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_hp             INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_hp_to          INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_manufacturer   TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_model          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS model_year            INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant                 TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_city            TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_company_name    TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_country         TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_state           TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS possible_values       TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS series                TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS suggested_vin         TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS transmission_speeds   TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS transmission_style    TEXT;
+
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='production_from')  THEN ALTER TABLE vin_directory RENAME COLUMN production_from  TO prod_from;          END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='production_to')    THEN ALTER TABLE vin_directory RENAME COLUMN production_to    TO prod_to;            END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='displacement_cid') THEN ALTER TABLE vin_directory RENAME COLUMN displacement_cid  TO displacement_ci;    END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='engine_make')      THEN ALTER TABLE vin_directory RENAME COLUMN engine_make       TO engine_manufacturer;END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='plant_company')    THEN ALTER TABLE vin_directory RENAME COLUMN plant_company     TO plant_company_name; END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vin_directory' AND column_name='airbag_location')  THEN ALTER TABLE vin_directory RENAME COLUMN airbag_location   TO air_bag_loc_front;  END IF;
+END $$;
 
 -- ================================================================
 -- SETUP COMPLETE — return to config.js and fill in your credentials
