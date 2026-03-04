@@ -605,24 +605,42 @@ function renderCarDetail(car) {
                 </div>`
               : row('VIN', null, true)}
             ${row('Model', car.model)}
+            ${row('Model Code', car.model_code, true)}
             ${row('Chassis', car.chassis)}
+            ${row('Make', car.make)}
+            ${row('Manufacturer', car.manufacturer)}
           </div>
 
           <div class="info-panel">
             <div class="info-panel-title">Production</div>
             ${row('Mfg. Year', car.mfg_year ? String(car.mfg_year) : null)}
             ${row('Mfg. Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
+            ${row('Production From', car.production_from)}
+            ${row('Production To', car.production_to)}
             ${row('Plant', car.plant)}
+            ${row('Plant City', car.plant_city)}
+            ${row('Plant Company', car.plant_company)}
+            ${row('Plant Country', car.plant_country)}
+            ${row('Plant State', car.plant_state)}
             ${row('Body', car.body_type)}
             ${row('Body Shape', car.body_shape)}
+            ${row('Doors', car.doors ? String(car.doors) : null)}
           </div>
 
           <div class="info-panel">
             <div class="info-panel-title">Specification</div>
             ${row('Engine', car.engine)}
+            ${row('Engine Make', car.engine_make)}
+            ${row('Engine Model', car.engine_model)}
+            ${row('Configuration', car.engine_configuration)}
+            ${row('Cylinders', car.engine_cylinders ? String(car.engine_cylinders) : null)}
+            ${row('Horsepower', car.engine_hp ? `${car.engine_hp} hp` : null)}
+            ${row('Displacement (CC)', car.displacement_cc ? String(car.displacement_cc) : null)}
+            ${row('Displacement (CID)', car.displacement_cid)}
             ${row('Transmission Type', car.transmission)}
             ${row('Transmission', car.gear_shift)}
             ${row('Driver Position', car.drive_side)}
+            ${row('Airbag Location', car.airbag_location)}
           </div>
 
           <div class="info-panel">
@@ -880,13 +898,34 @@ async function selectVinEntry(vinId) {
     document.getElementById('f-chassis').value = entry.chassis;
     updateModelOptions();
   }
-  set('f-model',        entry.model);
-  set('f-engine',       entry.engine);
-  set('f-year',         entry.mfg_year);
-  set('f-month',        entry.mfg_month);
-  set('f-transmission', entry.transmission);
-  set('f-color',        entry.color);
-  set('f-color-code',   entry.color_code);
+  set('f-model',              entry.model);
+  set('f-model-code',         entry.model_code);
+  set('f-make',               entry.make);
+  set('f-manufacturer',       entry.manufacturer);
+  set('f-engine',             entry.engine);
+  set('f-engine-make',        entry.engine_make);
+  set('f-engine-model',       entry.engine_model);
+  set('f-engine-config',      entry.engine_configuration);
+  set('f-engine-cylinders',   entry.engine_cylinders);
+  set('f-engine-hp',          entry.engine_hp);
+  set('f-displacement-cc',    entry.displacement_cc);
+  set('f-displacement-cid',   entry.displacement_cid);
+  set('f-year',               entry.mfg_year);
+  set('f-month',              entry.mfg_month);
+  set('f-production-from',    entry.production_from);
+  set('f-production-to',      entry.production_to);
+  set('f-plant',              entry.plant);
+  set('f-plant-city',         entry.plant_city);
+  set('f-plant-company',      entry.plant_company);
+  set('f-plant-country',      entry.plant_country);
+  set('f-plant-state',        entry.plant_state);
+  set('f-transmission',       entry.transmission);
+  set('f-grade',              entry.grade);
+  set('f-market',             entry.market);
+  set('f-destination',        entry.destination);
+  set('f-color',              entry.color);
+  set('f-color-code',         entry.color_code);
+  set('f-trim-code',          entry.trim_code);
 
   // Show verified status
   const statusEl = document.getElementById('vinStatus');
@@ -960,36 +999,54 @@ async function submitCar(e) {
   const rawFrame = get('f-frame').trim().toUpperCase() || null;
 
   const carData = {
-    user_id:            currentUser.id,
-    chassis:            get('f-chassis'),
-    model:              get('f-model'),
-    trim:               get('f-trim')               || null,
-    vin:                rawVin,
-    frame_number:       rawFrame,
-    mfg_year:           parseInt(get('f-year'))      || null,
-    mfg_month:          parseInt(get('f-month'))     || null,
-    plant:              get('f-plant')               || null,
-    body_type:          get('f-body')                || null,
-    body_shape:         get('f-body-shape')          || null,
-    engine:             get('f-engine')              || null,
-    transmission:       get('f-transmission')        || null,
-    gear_shift:         get('f-gear-shift')          || null,
-    fuel_system:        get('f-fuel-system')         || null,
-    drive_side:         get('f-drive')               || null,
-    grade:              get('f-grade')               || null,
-    market:             get('f-market')              || null,
-    destination:        get('f-destination')         || null,
-    color:              get('f-color')               || null,
-    color_code:         get('f-color-code')          || null,
-    trim_code:          get('f-trim-code')           || null,
-    interior_color:     get('f-interior')            || null,
-    interior_material:  get('f-interior-material')   || null,
-    title_status:       get('f-title-status')        || null,
-    verification:       get('f-verification')        || null,
-    country:            get('f-country')             || null,
-    location:           get('f-location')            || null,
-    current_owner_name: get('f-owner')               || null,
-    notes:              get('f-notes')               || null,
+    user_id:              currentUser.id,
+    chassis:              get('f-chassis'),
+    model:                get('f-model'),
+    model_code:           get('f-model-code')          || null,
+    trim:                 get('f-trim')                || null,
+    make:                 get('f-make')                || null,
+    manufacturer:         get('f-manufacturer')        || null,
+    vin:                  rawVin,
+    frame_number:         rawFrame,
+    mfg_year:             parseInt(get('f-year'))      || null,
+    mfg_month:            parseInt(get('f-month'))     || null,
+    production_from:      get('f-production-from')     || null,
+    production_to:        get('f-production-to')       || null,
+    plant:                get('f-plant')               || null,
+    plant_city:           get('f-plant-city')          || null,
+    plant_company:        get('f-plant-company')       || null,
+    plant_country:        get('f-plant-country')       || null,
+    plant_state:          get('f-plant-state')         || null,
+    body_type:            get('f-body')                || null,
+    body_shape:           get('f-body-shape')          || null,
+    doors:                parseInt(get('f-doors'))     || null,
+    engine:               get('f-engine')              || null,
+    engine_make:          get('f-engine-make')         || null,
+    engine_model:         get('f-engine-model')        || null,
+    engine_configuration: get('f-engine-config')       || null,
+    engine_cylinders:     parseInt(get('f-engine-cylinders')) || null,
+    engine_hp:            parseInt(get('f-engine-hp')) || null,
+    displacement_cc:      parseInt(get('f-displacement-cc'))  || null,
+    displacement_cid:     get('f-displacement-cid')    || null,
+    transmission:         get('f-transmission')        || null,
+    gear_shift:           get('f-gear-shift')          || null,
+    fuel_system:          get('f-fuel-system')         || null,
+    drive_side:           get('f-drive')               || null,
+    airbag_location:      get('f-airbag-location')     || null,
+    grade:                get('f-grade')               || null,
+    market:               get('f-market')              || null,
+    destination:          get('f-destination')         || null,
+    color:                get('f-color')               || null,
+    color_code:           get('f-color-code')          || null,
+    trim_code:            get('f-trim-code')           || null,
+    interior_color:       get('f-interior')            || null,
+    interior_material:    get('f-interior-material')   || null,
+    title_status:         get('f-title-status')        || null,
+    verification:         get('f-verification')        || null,
+    country:              get('f-country')             || null,
+    location:             get('f-location')            || null,
+    current_owner_name:   get('f-owner')               || null,
+    notes:                get('f-notes')               || null,
   };
 
   // Track whether VIN came from the directory or was typed manually.

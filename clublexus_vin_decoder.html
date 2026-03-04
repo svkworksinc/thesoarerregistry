@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexus Master VIN Harvester (Precision Clean)</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; }
+        h2 { color: #38bdf8; margin-bottom: 5px; }
+        textarea { width: 100%; height: 100px; background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 15px; border-radius: 8px; font-family: monospace; box-sizing: border-box; margin-bottom: 10px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        button { padding: 12px 20px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-run { background: #0ea5e9; color: white; }
+        .btn-filter { background: #f59e0b; color: white; display: none; }
+        .btn-csv { background: #10b981; color: white; display: none; }
+        #status { font-size: 14px; color: #94a3b8; margin-bottom: 10px; }
+        .table-wrapper { overflow: auto; border: 1px solid #334155; border-radius: 8px; max-height: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; background: #0f172a; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #334155; white-space: nowrap; }
+        th { background: #1e293b; color: #38bdf8; position: sticky; top: 0; z-index: 5; }
+        .vin-column { background: rgba(244, 114, 182, 0.15); color: #f472b6; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Master VIN Harvester Pro</h2>
+    <textarea id="vinInput" placeholder="Paste VINs here..."></textarea>
+    
+    <div class="controls">
+        <button class="btn-run" onclick="processVINs()">▶ Start Extraction</button>
+        <button id="filterBtn" class="btn-filter" onclick="cleanAndFilter()">✨ Clean & Remove Specified Columns</button>
+        <button id="csvBtn" class="btn-csv" onclick="downloadCSV()">⬇ Download Cleaned CSV</button>
+    </div>
+
+    <div id="status">Ready.</div>
+
+    <div class="table-wrapper">
+        <table id="resultsTable">
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+let masterData = [];
+
+// Complete list of columns to be forcibly removed
+const columnsToRemove = [
+    "DriveType", "EngineCycles", "errorCode", "ErrorCode", "ErrorText", 
+    "FuelInjectionType", "FuelTypePrimary", "GVWR", "GVWR_to", "MakeID", 
+    "ManufacturerId", "ModelID", "Note", "OtherEngineInfo", "SeatBeltsAll", 
+    "ValveTrainDesign", "VehicleType", "BodyClass", "VehicleDescriptor"
+];
+
+async function processVINs() {
+    const input = document.getElementById('vinInput').value;
+    const vins = input.split('\n').map(v => v.trim()).filter(v => v.length > 0);
+    const status = document.getElementById('status');
+    
+    masterData = [];
+    status.innerText = `Starting...`;
+
+    for (let i = 0; i < vins.length; i++) {
+        status.innerText = `Processing ${i+1}/${vins.length}: ${vins[i]}`;
+        const data = await fetchFullVinData(vins[i]);
+        if (data) masterData.push(data);
+    }
+
+    renderTable();
+    document.getElementById('filterBtn').style.display = 'block';
+    document.getElementById('csvBtn').style.display = 'block';
+    status.innerText = `Loaded ${masterData.length} records.`;
+}
+
+async function fetchFullVinData(vin) {
+    const url = `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`;
+    try {
+        const response = await fetch(url);
+        const json = await response.json();
+        const result = json.Results[0];
+        
+        return { "VIN_IDENTIFIER": vin, ...result };
+    } catch (e) { return null; }
+}
+
+function cleanAndFilter() {
+    const errorStrings = ["invalid character", "model year decoded for this vin may be incorrect"];
+    
+    // 1. Filter out error rows based on original ErrorText before we delete the column
+    let filtered = masterData.filter(row => {
+        const errorText = (row.ErrorText || "").toLowerCase();
+        return !errorStrings.some(msg => errorText.includes(msg));
+    });
+
+    // 2. Comprehensive Column Pruning
+    if (filtered.length > 0) {
+        const allKeys = Object.keys(filtered[0]);
+        
+        const usefulKeys = allKeys.filter(key => {
+            const isTargetedForRemoval = columnsToRemove.includes(key);
+            const hasData = filtered.some(row => row[key] && row[key] !== "0" && row[key] !== "Not Applicable" && row[key] !== "None" && row[key] !== "");
+            return !isTargetedForRemoval && hasData;
+        });
+
+        masterData = filtered.map(row => {
+            let cleanRow = {};
+            usefulKeys.forEach(k => cleanRow[k] = row[k]);
+            return cleanRow;
+        });
+
+        renderTable();
+        document.getElementById('status').innerText = "List Cleaned! Error rows and specific metadata columns removed.";
+    }
+}
+
+function renderTable() {
+    const header = document.getElementById('tableHeader');
+    const body = document.getElementById('tableBody');
+    if (masterData.length === 0) return;
+
+    const keys = Object.keys(masterData[0]);
+    
+    header.innerHTML = `<tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr>`;
+    body.innerHTML = masterData.map(row => `
+        <tr>
+            ${keys.map(k => `<td class="${k === 'VIN_IDENTIFIER' ? 'vin-column' : ''}">${row[k] || ''}</td>`).join('')}
+        </tr>
+    `).join('');
+}
+
+function downloadCSV() {
+    if (masterData.length === 0) return;
+    const keys = Object.keys(masterData[0]);
+    
+    const csvContent = [
+        keys.join(','),
+        ...masterData.map(row => keys.map(k => `"${(row[k] || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Lexus_Data_Ultra_Cleaned.csv`;
+    link.click();
+}
+</script>
+
+</body>
+</html>
