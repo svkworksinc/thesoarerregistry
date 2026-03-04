@@ -49,27 +49,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   checkSetup();
   setupDragDrop();
 
-  // ── Step 1: Resolve initial auth state ─────────────────
-  // getSession() waits for any in-progress token refresh to complete,
-  // so every subsequent DB query uses a fresh, valid JWT.  Without this,
-  // a stored-but-expired access token would cause PostgREST to reject
-  // even public (USING true) queries before evaluating RLS at all.
-  const { data: { session: initSession } } = await db.auth.getSession();
-  if (initSession?.user) {
-    currentUser = initSession.user;
-    const { data: initProfile } = await db.from('profiles')
-      .select('*').eq('id', initSession.user.id).maybeSingle();
-    currentUser.profile = initProfile || {};
-  }
-  updateNavForUser();
-
-  // ── Step 2: Load public data and run hash nav ───────────
-  // Auth is now settled and the JWT is valid, so these queries succeed.
-  Promise.all([loadStats(), loadRegistryTable(1)]);
+  // ── Step 1: Public data — start immediately, no auth needed ─────
+  // Never block these on auth.  If getSession() is slow (e.g. waiting
+  // for the multi-tab refresh lock held by another tab), the registry
+  // would look broken without an early kick-off here.
+  loadStats();
+  loadRegistryTable(1);
   handleHashNav();
 
-  // ── Step 3: React to future auth events ────────────────
-  // INITIAL_SESSION is already handled above; only handle subsequent events.
+  // ── Step 2: Resolve auth state in parallel ───────────────────────
+  // getSession() blocks until any pending token refresh is done, giving
+  // us a guaranteed-fresh JWT.  Wrap in try/catch so a network error or
+  // thrown exception can never crash the rest of init.
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user) {
+      currentUser = session.user;
+      const { data: profile } = await db.from('profiles')
+        .select('*').eq('id', session.user.id).maybeSingle();
+      currentUser.profile = profile || {};
+    }
+  } catch (_) { /* auth resolution failed — proceed as logged-out */ }
+  updateNavForUser();
+
+  // ── Step 3: Reload registry with fresh JWT ───────────────────────
+  // If the stored session had an expired access token, PostgREST would
+  // have rejected the first load even for USING(true) policies.  Now
+  // that getSession() has refreshed the token, this call is safe.
+  loadRegistryTable(1);
+
+  // Re-render profile page if it was opened before auth settled.
+  if (currentUser &&
+      document.getElementById('page-profile')?.classList.contains('active')) {
+    loadProfile();
+  }
+
+  // ── Step 4: React to future auth events ──────────────────────────
+  // INITIAL_SESSION is handled above; skip it to avoid double renders.
   db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'INITIAL_SESSION') return;
     if (session?.user) {
@@ -81,8 +97,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentUser = null;
     }
     updateNavForUser();
-    // If the profile page is open, reload it so car grid refreshes.
-    if (currentUser && document.getElementById('page-profile')?.classList.contains('active')) {
+    if (currentUser &&
+        document.getElementById('page-profile')?.classList.contains('active')) {
       loadProfile();
     }
   });
