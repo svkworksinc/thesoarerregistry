@@ -211,6 +211,18 @@
               <input type="text" id="f-trim" placeholder="e.g. Sport Package, Anniversary Edition" />
             </div>
             <div class="form-group">
+              <label for="f-model-name">Model Name</label>
+              <input type="text" id="f-model-name" placeholder="e.g. SC300, Soarer 3.0GT" />
+            </div>
+            <div class="form-group">
+              <label for="f-series">Series</label>
+              <input type="text" id="f-series" placeholder="e.g. Z30" />
+            </div>
+            <div class="form-group">
+              <label for="f-model-year">Model Year</label>
+              <input type="number" id="f-model-year" placeholder="e.g. 1994" min="1981" max="2010" />
+            </div>
+            <div class="form-group">
               <label for="f-make">Make</label>
               <input type="text" id="f-make" placeholder="e.g. Toyota, Lexus" />
             </div>
@@ -272,12 +284,20 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="f-production-from">Production From</label>
-              <input type="text" id="f-production-from" placeholder="e.g. 1991-10" />
+              <label for="f-prod-from">Production From</label>
+              <input type="text" id="f-prod-from" placeholder="e.g. 1991-10" />
             </div>
             <div class="form-group">
-              <label for="f-production-to">Production To</label>
-              <input type="text" id="f-production-to" placeholder="e.g. 2000-07" />
+              <label for="f-prod-to">Production To</label>
+              <input type="text" id="f-prod-to" placeholder="e.g. 2000-07" />
+            </div>
+            <div class="form-group">
+              <label for="f-year-month">Year/Month</label>
+              <input type="text" id="f-year-month" placeholder="e.g. 199410" />
+            </div>
+            <div class="form-group">
+              <label for="f-frame-short">Frame Short</label>
+              <input type="text" id="f-frame-short" placeholder="e.g. JZZ30-0012345" style="text-transform:uppercase;" />
             </div>
             <div class="form-group">
               <label for="f-plant">Plant</label>
@@ -288,8 +308,8 @@
               <input type="text" id="f-plant-city" placeholder="e.g. Toyota City" />
             </div>
             <div class="form-group">
-              <label for="f-plant-company">Plant Company</label>
-              <input type="text" id="f-plant-company" placeholder="e.g. Toyota Motor Corp." />
+              <label for="f-plant-company-name">Plant Company</label>
+              <input type="text" id="f-plant-company-name" placeholder="e.g. Toyota Motor Corp." />
             </div>
             <div class="form-group">
               <label for="f-plant-country">Plant Country</label>
@@ -335,8 +355,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="f-engine-make">Engine Make</label>
-              <input type="text" id="f-engine-make" placeholder="e.g. Toyota" />
+              <label for="f-engine-manufacturer">Engine Make</label>
+              <input type="text" id="f-engine-manufacturer" placeholder="e.g. Toyota" />
             </div>
             <div class="form-group">
               <label for="f-engine-model">Engine Model</label>
@@ -355,12 +375,20 @@
               <input type="number" id="f-engine-hp" placeholder="e.g. 225" min="1" />
             </div>
             <div class="form-group">
+              <label for="f-engine-hp-to">Engine HP (Max)</label>
+              <input type="number" id="f-engine-hp-to" placeholder="e.g. 255" min="1" />
+            </div>
+            <div class="form-group">
               <label for="f-displacement-cc">Displacement (CC)</label>
               <input type="number" id="f-displacement-cc" placeholder="e.g. 2997" min="1" />
             </div>
             <div class="form-group">
-              <label for="f-displacement-cid">Displacement (CID)</label>
-              <input type="text" id="f-displacement-cid" placeholder="e.g. 182.9" />
+              <label for="f-displacement-ci">Displacement (CI)</label>
+              <input type="text" id="f-displacement-ci" placeholder="e.g. 182.9" />
+            </div>
+            <div class="form-group">
+              <label for="f-displacement-l">Displacement (L)</label>
+              <input type="text" id="f-displacement-l" placeholder="e.g. 3.0" />
             </div>
             <div class="form-group">
               <label for="f-transmission">Transmission Type</label>
@@ -382,6 +410,14 @@
               </select>
             </div>
             <div class="form-group">
+              <label for="f-transmission-speeds">Transmission Speeds</label>
+              <input type="text" id="f-transmission-speeds" placeholder="e.g. 4, 5, 6" />
+            </div>
+            <div class="form-group">
+              <label for="f-transmission-style">Transmission Style</label>
+              <input type="text" id="f-transmission-style" placeholder="e.g. Automatic, Manual" />
+            </div>
+            <div class="form-group">
               <label for="f-drive">Driver Position</label>
               <select id="f-drive">
                 <option value="">-</option>
@@ -390,8 +426,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="f-airbag-location">Airbag Location</label>
-              <input type="text" id="f-airbag-location" placeholder="e.g. Driver, Driver &amp; Passenger" />
+              <label for="f-air-bag-loc-front">Airbag Location</label>
+              <input type="text" id="f-air-bag-loc-front" placeholder="e.g. Driver, Driver &amp; Passenger" />
             </div>
           </div>
         </fieldset>
