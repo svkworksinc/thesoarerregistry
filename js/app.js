@@ -606,6 +606,9 @@ function renderCarDetail(car) {
               : row('VIN', null, true)}
             ${row('Model', car.model)}
             ${row('Model Code', car.model_code, true)}
+            ${row('Model Name', car.model_name)}
+            ${row('Series', car.series)}
+            ${row('Model Year', car.model_year ? String(car.model_year) : null)}
             ${row('Chassis', car.chassis)}
             ${row('Make', car.make)}
             ${row('Manufacturer', car.manufacturer)}
@@ -615,11 +618,13 @@ function renderCarDetail(car) {
             <div class="info-panel-title">Production</div>
             ${row('Mfg. Year', car.mfg_year ? String(car.mfg_year) : null)}
             ${row('Mfg. Month', car.mfg_month ? MONTHS[car.mfg_month - 1] : null)}
-            ${row('Production From', car.production_from)}
-            ${row('Production To', car.production_to)}
+            ${row('Year/Month', car.year_month)}
+            ${row('Production From', car.prod_from)}
+            ${row('Production To', car.prod_to)}
+            ${row('Frame Short', car.frame_short, true)}
             ${row('Plant', car.plant)}
             ${row('Plant City', car.plant_city)}
-            ${row('Plant Company', car.plant_company)}
+            ${row('Plant Company', car.plant_company_name)}
             ${row('Plant Country', car.plant_country)}
             ${row('Plant State', car.plant_state)}
             ${row('Body', car.body_type)}
@@ -630,17 +635,21 @@ function renderCarDetail(car) {
           <div class="info-panel">
             <div class="info-panel-title">Specification</div>
             ${row('Engine', car.engine)}
-            ${row('Engine Make', car.engine_make)}
+            ${row('Engine Make', car.engine_manufacturer)}
             ${row('Engine Model', car.engine_model)}
             ${row('Configuration', car.engine_configuration)}
             ${row('Cylinders', car.engine_cylinders ? String(car.engine_cylinders) : null)}
             ${row('Horsepower', car.engine_hp ? `${car.engine_hp} hp` : null)}
+            ${row('HP (Max)', car.engine_hp_to ? `${car.engine_hp_to} hp` : null)}
             ${row('Displacement (CC)', car.displacement_cc ? String(car.displacement_cc) : null)}
-            ${row('Displacement (CID)', car.displacement_cid)}
+            ${row('Displacement (CI)', car.displacement_ci)}
+            ${row('Displacement (L)', car.displacement_l)}
             ${row('Transmission Type', car.transmission)}
             ${row('Transmission', car.gear_shift)}
+            ${row('Transmission Speeds', car.transmission_speeds)}
+            ${row('Transmission Style', car.transmission_style)}
             ${row('Driver Position', car.drive_side)}
-            ${row('Airbag Location', car.airbag_location)}
+            ${row('Airbag Location', car.air_bag_loc_front)}
           </div>
 
           <div class="info-panel">
@@ -898,34 +907,44 @@ async function selectVinEntry(vinId) {
     document.getElementById('f-chassis').value = entry.chassis;
     updateModelOptions();
   }
-  set('f-model',              entry.model);
-  set('f-model-code',         entry.model_code);
-  set('f-make',               entry.make);
-  set('f-manufacturer',       entry.manufacturer);
-  set('f-engine',             entry.engine);
-  set('f-engine-make',        entry.engine_make);
-  set('f-engine-model',       entry.engine_model);
-  set('f-engine-config',      entry.engine_configuration);
-  set('f-engine-cylinders',   entry.engine_cylinders);
-  set('f-engine-hp',          entry.engine_hp);
-  set('f-displacement-cc',    entry.displacement_cc);
-  set('f-displacement-cid',   entry.displacement_cid);
-  set('f-year',               entry.mfg_year);
-  set('f-month',              entry.mfg_month);
-  set('f-production-from',    entry.production_from);
-  set('f-production-to',      entry.production_to);
-  set('f-plant',              entry.plant);
-  set('f-plant-city',         entry.plant_city);
-  set('f-plant-company',      entry.plant_company);
-  set('f-plant-country',      entry.plant_country);
-  set('f-plant-state',        entry.plant_state);
-  set('f-transmission',       entry.transmission);
-  set('f-grade',              entry.grade);
-  set('f-market',             entry.market);
-  set('f-destination',        entry.destination);
-  set('f-color',              entry.color);
-  set('f-color-code',         entry.color_code);
-  set('f-trim-code',          entry.trim_code);
+  set('f-model',               entry.model);
+  set('f-model-code',          entry.model_code);
+  set('f-model-name',          entry.model_name);
+  set('f-series',              entry.series);
+  set('f-model-year',          entry.model_year);
+  set('f-make',                entry.make);
+  set('f-manufacturer',        entry.manufacturer);
+  set('f-engine',              entry.engine);
+  set('f-engine-manufacturer', entry.engine_manufacturer);
+  set('f-engine-model',        entry.engine_model);
+  set('f-engine-config',       entry.engine_configuration);
+  set('f-engine-cylinders',    entry.engine_cylinders);
+  set('f-engine-hp',           entry.engine_hp);
+  set('f-engine-hp-to',        entry.engine_hp_to);
+  set('f-displacement-cc',     entry.displacement_cc);
+  set('f-displacement-ci',     entry.displacement_ci);
+  set('f-displacement-l',      entry.displacement_l);
+  set('f-year',                entry.mfg_year);
+  set('f-month',               entry.mfg_month);
+  set('f-prod-from',           entry.prod_from);
+  set('f-prod-to',             entry.prod_to);
+  set('f-year-month',          entry.year_month);
+  set('f-frame-short',         entry.frame_short);
+  set('f-plant',               entry.plant);
+  set('f-plant-city',          entry.plant_city);
+  set('f-plant-company-name',  entry.plant_company_name);
+  set('f-plant-country',       entry.plant_country);
+  set('f-plant-state',         entry.plant_state);
+  set('f-transmission',        entry.transmission);
+  set('f-transmission-speeds', entry.transmission_speeds);
+  set('f-transmission-style',  entry.transmission_style);
+  set('f-grade',               entry.grade);
+  set('f-market',              entry.market);
+  set('f-destination',         entry.destination);
+  set('f-color',               entry.color);
+  set('f-color-code',          entry.color_code);
+  set('f-trim-code',           entry.trim_code);
+  set('f-air-bag-loc-front',   entry.air_bag_loc_front);
 
   // Show verified status
   const statusEl = document.getElementById('vinStatus');
@@ -1002,38 +1021,47 @@ async function submitCar(e) {
     user_id:              currentUser.id,
     chassis:              get('f-chassis'),
     model:                get('f-model'),
-    model_code:           get('f-model-code')          || null,
-    trim:                 get('f-trim')                || null,
-    make:                 get('f-make')                || null,
-    manufacturer:         get('f-manufacturer')        || null,
+    model_code:           get('f-model-code')              || null,
+    model_name:           get('f-model-name')              || null,
+    series:               get('f-series')                  || null,
+    model_year:           parseInt(get('f-model-year'))    || null,
+    trim:                 get('f-trim')                    || null,
+    make:                 get('f-make')                    || null,
+    manufacturer:         get('f-manufacturer')            || null,
     vin:                  rawVin,
     frame_number:         rawFrame,
-    mfg_year:             parseInt(get('f-year'))      || null,
-    mfg_month:            parseInt(get('f-month'))     || null,
-    production_from:      get('f-production-from')     || null,
-    production_to:        get('f-production-to')       || null,
-    plant:                get('f-plant')               || null,
-    plant_city:           get('f-plant-city')          || null,
-    plant_company:        get('f-plant-company')       || null,
-    plant_country:        get('f-plant-country')       || null,
-    plant_state:          get('f-plant-state')         || null,
-    body_type:            get('f-body')                || null,
-    body_shape:           get('f-body-shape')          || null,
-    doors:                parseInt(get('f-doors'))     || null,
-    engine:               get('f-engine')              || null,
-    engine_make:          get('f-engine-make')         || null,
-    engine_model:         get('f-engine-model')        || null,
-    engine_configuration: get('f-engine-config')       || null,
+    mfg_year:             parseInt(get('f-year'))          || null,
+    mfg_month:            parseInt(get('f-month'))         || null,
+    prod_from:            get('f-prod-from')               || null,
+    prod_to:              get('f-prod-to')                 || null,
+    year_month:           get('f-year-month')              || null,
+    frame_short:          get('f-frame-short')             || null,
+    plant:                get('f-plant')                   || null,
+    plant_city:           get('f-plant-city')              || null,
+    plant_company_name:   get('f-plant-company-name')      || null,
+    plant_country:        get('f-plant-country')           || null,
+    plant_state:          get('f-plant-state')             || null,
+    body_type:            get('f-body')                    || null,
+    body_shape:           get('f-body-shape')              || null,
+    doors:                parseInt(get('f-doors'))         || null,
+    engine:               get('f-engine')                  || null,
+    engine_manufacturer:  get('f-engine-manufacturer')     || null,
+    engine_model:         get('f-engine-model')            || null,
+    engine_configuration: get('f-engine-config')           || null,
     engine_cylinders:     parseInt(get('f-engine-cylinders')) || null,
-    engine_hp:            parseInt(get('f-engine-hp')) || null,
+    engine_hp:            parseInt(get('f-engine-hp'))     || null,
+    engine_hp_to:         parseInt(get('f-engine-hp-to')) || null,
     displacement_cc:      parseInt(get('f-displacement-cc'))  || null,
-    displacement_cid:     get('f-displacement-cid')    || null,
-    transmission:         get('f-transmission')        || null,
-    gear_shift:           get('f-gear-shift')          || null,
-    fuel_system:          get('f-fuel-system')         || null,
-    drive_side:           get('f-drive')               || null,
-    airbag_location:      get('f-airbag-location')     || null,
-    grade:                get('f-grade')               || null,
+    displacement_ci:      get('f-displacement-ci')         || null,
+    displacement_l:       get('f-displacement-l')          || null,
+    transmission:         get('f-transmission')            || null,
+    gear_shift:           get('f-gear-shift')              || null,
+    transmission_speeds:  get('f-transmission-speeds')     || null,
+    transmission_style:   get('f-transmission-style')      || null,
+    fuel_system:          get('f-fuel-system')             || null,
+    drive_side:           get('f-drive')                   || null,
+    air_bag_loc_front:    get('f-air-bag-loc-front')       || null,
+    grade:                get('f-grade')                   || null,
     market:               get('f-market')              || null,
     destination:          get('f-destination')         || null,
     color:                get('f-color')               || null,
@@ -1150,23 +1178,37 @@ async function editCar(id) {
       const el = document.getElementById(elId);
       if (el) el.value = val || '';
     };
-    set('f-model',              car.model);         set('f-trim',              car.trim);
-    set('f-vin',                car.vin);           set('f-frame',             car.frame_number);
-    set('f-year',               car.mfg_year);      set('f-month',             car.mfg_month);
-    set('f-plant',              car.plant);         set('f-body',              car.body_type);
-    set('f-body-shape',         car.body_shape);
-    set('f-engine',             car.engine);        set('f-transmission',      car.transmission);
-    set('f-gear-shift',         car.gear_shift);    set('f-fuel-system',       car.fuel_system);
-    set('f-drive',              car.drive_side);
-    set('f-grade',              car.grade);         set('f-market',            car.market);
-    set('f-destination',        car.destination);
-    set('f-color',              car.color);         set('f-color-code',        car.color_code);
-    set('f-trim-code',          car.trim_code);     set('f-interior',          car.interior_color);
-    set('f-interior-material',  car.interior_material);
-    set('f-title-status',       car.title_status);  set('f-verification',      car.verification);
-    set('f-country',            car.country);       set('f-location',          car.location);
-    set('f-owner',              car.current_owner_name);
-    set('f-notes',              car.notes);
+    set('f-model',               car.model);              set('f-trim',               car.trim);
+    set('f-model-code',          car.model_code);          set('f-model-name',         car.model_name);
+    set('f-series',              car.series);              set('f-model-year',         car.model_year);
+    set('f-make',                car.make);                set('f-manufacturer',       car.manufacturer);
+    set('f-vin',                 car.vin);                 set('f-frame',              car.frame_number);
+    set('f-year',                car.mfg_year);            set('f-month',              car.mfg_month);
+    set('f-prod-from',           car.prod_from);           set('f-prod-to',            car.prod_to);
+    set('f-year-month',          car.year_month);          set('f-frame-short',        car.frame_short);
+    set('f-plant',               car.plant);               set('f-plant-city',         car.plant_city);
+    set('f-plant-company-name',  car.plant_company_name);  set('f-plant-country',      car.plant_country);
+    set('f-plant-state',         car.plant_state);         set('f-body',               car.body_type);
+    set('f-body-shape',          car.body_shape);          set('f-doors',              car.doors);
+    set('f-engine',              car.engine);              set('f-engine-manufacturer',car.engine_manufacturer);
+    set('f-engine-model',        car.engine_model);        set('f-engine-config',      car.engine_configuration);
+    set('f-engine-cylinders',    car.engine_cylinders);    set('f-engine-hp',          car.engine_hp);
+    set('f-engine-hp-to',        car.engine_hp_to);
+    set('f-displacement-cc',     car.displacement_cc);     set('f-displacement-ci',    car.displacement_ci);
+    set('f-displacement-l',      car.displacement_l);
+    set('f-transmission',        car.transmission);        set('f-gear-shift',         car.gear_shift);
+    set('f-transmission-speeds', car.transmission_speeds); set('f-transmission-style', car.transmission_style);
+    set('f-fuel-system',         car.fuel_system);         set('f-drive',              car.drive_side);
+    set('f-air-bag-loc-front',   car.air_bag_loc_front);
+    set('f-grade',               car.grade);               set('f-market',             car.market);
+    set('f-destination',         car.destination);
+    set('f-color',               car.color);               set('f-color-code',         car.color_code);
+    set('f-trim-code',           car.trim_code);           set('f-interior',           car.interior_color);
+    set('f-interior-material',   car.interior_material);
+    set('f-title-status',        car.title_status);        set('f-verification',       car.verification);
+    set('f-country',             car.country);             set('f-location',           car.location);
+    set('f-owner',               car.current_owner_name);
+    set('f-notes',               car.notes);
 
     document.getElementById('submitBtn').textContent = 'Save Changes';
     const ph = document.querySelector('#page-submit h1');
