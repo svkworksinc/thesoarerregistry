@@ -195,6 +195,51 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS title_status      TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS verification      TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS vin_matched       BOOLEAN DEFAULT NULL;
 
+-- Extended vehicle data (from combined CSV sources)
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS make                  TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS manufacturer          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS model_code            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS production_from       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS production_to         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_city            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_company         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_country         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant_state           TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_cc       INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS displacement_cid      TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_configuration  TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_cylinders      INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_hp             INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_make           TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine_model          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS doors                 INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS airbag_location       TEXT;
+
+-- Extend the VIN directory with the same additional fields
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                 TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer         TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS model_code           TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS production_from      TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS production_to        TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS grade                TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS market               TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS destination          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS trim_code            TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant                TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_city           TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_company        TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_country        TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS plant_state          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_cc      INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS displacement_cid     TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_configuration TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_cylinders     INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_hp            INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_make          TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS engine_model         TEXT;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS doors                INTEGER;
+ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS airbag_location      TEXT;
+
 -- ================================================================
 -- SETUP COMPLETE — return to config.js and fill in your credentials
 -- ================================================================
