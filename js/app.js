@@ -47,8 +47,47 @@ function chassisTagClass(chassis) {
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   checkSetup();
+  setupDragDrop();
 
-  db.auth.onAuthStateChange(async (_event, session) => {
+  // ── Step 1: Public data — start immediately, no auth needed ─────
+  // Never block these on auth.  If getSession() is slow (e.g. waiting
+  // for the multi-tab refresh lock held by another tab), the registry
+  // would look broken without an early kick-off here.
+  loadStats();
+  loadRegistryTable(1);
+  handleHashNav();
+
+  // ── Step 2: Resolve auth state in parallel ───────────────────────
+  // getSession() blocks until any pending token refresh is done, giving
+  // us a guaranteed-fresh JWT.  Wrap in try/catch so a network error or
+  // thrown exception can never crash the rest of init.
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user) {
+      currentUser = session.user;
+      const { data: profile } = await db.from('profiles')
+        .select('*').eq('id', session.user.id).maybeSingle();
+      currentUser.profile = profile || {};
+    }
+  } catch (_) { /* auth resolution failed — proceed as logged-out */ }
+  updateNavForUser();
+
+  // ── Step 3: Reload registry with fresh JWT ───────────────────────
+  // If the stored session had an expired access token, PostgREST would
+  // have rejected the first load even for USING(true) policies.  Now
+  // that getSession() has refreshed the token, this call is safe.
+  loadRegistryTable(1);
+
+  // Re-render profile page if it was opened before auth settled.
+  if (currentUser &&
+      document.getElementById('page-profile')?.classList.contains('active')) {
+    loadProfile();
+  }
+
+  // ── Step 4: React to future auth events ──────────────────────────
+  // INITIAL_SESSION is handled above; skip it to avoid double renders.
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'INITIAL_SESSION') return;
     if (session?.user) {
       currentUser = session.user;
       const { data: profile } = await db.from('profiles')
@@ -58,22 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentUser = null;
     }
     updateNavForUser();
-    // If the profile page is already open (e.g. auth resolved after the page
-    // was shown), reload it so the car grid populates correctly.
-    if (currentUser && document.getElementById('page-profile')?.classList.contains('active')) {
+    if (currentUser &&
+        document.getElementById('page-profile')?.classList.contains('active')) {
       loadProfile();
     }
   });
-
-  // Eagerly resolve the current session so that auth-gated pages (like #profile)
-  // work correctly on page load without waiting for onAuthStateChange to fire.
-  const { data: { session: initSession } } = await db.auth.getSession();
-  if (initSession?.user && !currentUser) currentUser = initSession.user;
-
-  // Run independent fetches in parallel
-  Promise.all([loadStats(), loadRegistryTable(1)]);
-  setupDragDrop();
-  handleHashNav();
 
   // Close VIN search dropdown on outside click
   document.addEventListener('click', e => {
