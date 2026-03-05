@@ -1223,9 +1223,9 @@ async function editCar(id) {
       .select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     if (!car) throw new Error('Not found');
-    const { data: images } = await db.from('car_images')
+    const { data: carImages } = await db.from('car_images')
       .select('*').eq('car_id', id).order('is_primary', { ascending: false });
-    car.car_images = images || [];
+    car.car_images = carImages || [];
 
     showPage('submit');
     document.getElementById('editCarId').value = id;
