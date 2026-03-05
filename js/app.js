@@ -72,11 +72,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (_) { /* auth resolution failed — proceed as logged-out */ }
   updateNavForUser();
 
-  // ── Step 3: Reload registry with fresh JWT ───────────────────────
+  // ── Step 3: Reload public data with fresh JWT ───────────────────
   // If the stored session had an expired access token, PostgREST would
-  // have rejected the first load even for USING(true) policies.  Now
-  // that getSession() has refreshed the token, this call is safe.
+  // have rejected the first loads even for USING(true) policies. Now
+  // that getSession() has refreshed the token, retry all public data.
+  loadStats();
   loadRegistryTable(1);
+  // Re-run hash nav so a #car/ID link that failed on the first attempt
+  // (expired token) gets a second chance with the refreshed token.
+  if (window.location.hash.startsWith('#car/')) handleHashNav();
 
   // Re-render profile page if it was opened before auth settled.
   if (currentUser &&
