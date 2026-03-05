@@ -266,7 +266,7 @@ END $$;
 
 -- Ensure RLS and the search index exist regardless of when the table was created.
 ALTER TABLE vin_directory ENABLE ROW LEVEL SECURITY;
-CREATE INDEX IF NOT EXISTS idx_vin_dir_searched_vin ON vin_directory(searched_vin);
+CREATE INDEX IF NOT EXISTS idx_vin_dir_vin ON vin_directory(vin);
 -- Extend the VIN directory with the same columns (all CSV headers present).
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                  TEXT;
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer          TEXT;

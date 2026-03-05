@@ -852,12 +852,20 @@ function onVinSearchInput() {
 async function searchVinDirectory(q) {
   const resultsEl = document.getElementById('vinSearchResults');
 
-  const { data: vins } = await db.from('vin_directory')
+  resultsEl.innerHTML = '<div class="vin-result-empty">Searching…</div>';
+  resultsEl.classList.remove('hidden');
+
+  const { data: vins, error } = await db.from('vin_directory')
     .select('*').ilike('vin', `%${q}%`).order('vin').limit(10);
+
+  if (error) {
+    console.error('vin_directory query error:', error);
+    resultsEl.innerHTML = `<div class="vin-result-empty">Search error: ${escHtml(error.message)} — check Supabase RLS policies.</div>`;
+    return;
+  }
 
   if (!vins || !vins.length) {
     resultsEl.innerHTML = '<div class="vin-result-empty">No matching VINs in directory — you can still enter it manually below.</div>';
-    resultsEl.classList.remove('hidden');
     return;
   }
 
