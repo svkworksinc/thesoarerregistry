@@ -1219,9 +1219,13 @@ function handleCarError(error, errEl) {
 
 async function editCar(id) {
   try {
-    const { data: car } = await db.from('cars')
-      .select('*, car_images(*)').eq('id', id).single();
+    const { data: car, error } = await db.from('cars')
+      .select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
     if (!car) throw new Error('Not found');
+    const { data: images } = await db.from('car_images')
+      .select('*').eq('car_id', id).order('is_primary', { ascending: false });
+    car.car_images = images || [];
 
     showPage('submit');
     document.getElementById('editCarId').value = id;
@@ -1285,7 +1289,8 @@ async function editCar(id) {
           ${img.is_primary ? '<span style="position:absolute;bottom:3px;left:4px;font-size:10px;color:gold;">&#9733;</span>' : ''}
         </div>`).join('');
     }
-  } catch {
+  } catch (err) {
+    console.error('editCar error:', err);
     alert('Could not load car data for editing.');
   }
 }
