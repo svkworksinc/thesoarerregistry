@@ -852,8 +852,9 @@ function onVinSearchInput() {
 async function searchVinDirectory(q) {
   const resultsEl = document.getElementById('vinSearchResults');
 
+  // searched_vin = Toyota-side VIN (from SEARCHED_VIN CSV column, lowercased by Supabase)
   const { data: vins } = await db.from('vin_directory')
-    .select('*').ilike('vin', `%${q}%`).order('vin').limit(10);
+    .select('*').ilike('searched_vin', `%${q}%`).order('searched_vin').limit(10);
 
   if (!vins || !vins.length) {
     resultsEl.innerHTML = '<div class="vin-result-empty">No matching VINs in directory — you can still enter it manually below.</div>';
@@ -861,8 +862,8 @@ async function searchVinDirectory(q) {
     return;
   }
 
-  // Check which are already registered
-  const vinValues = vins.map(v => v.vin);
+  // Check which are already registered in the cars table
+  const vinValues = vins.map(v => v.searched_vin).filter(Boolean);
   const { data: registered } = await db.from('cars')
     .select('vin, current_owner_name, user_id')
     .in('vin', vinValues).eq('status', 'active');
@@ -870,17 +871,19 @@ async function searchVinDirectory(q) {
   (registered || []).forEach(r => { regMap[r.vin] = r; });
 
   resultsEl.innerHTML = vins.map(v => {
-    const reg   = regMap[v.vin];
-    const isOwn = reg && currentUser && reg.user_id === currentUser.id;
-    const badge = reg
+    const vinKey = v.searched_vin;
+    const reg    = regMap[vinKey];
+    const isOwn  = reg && currentUser && reg.user_id === currentUser.id;
+    const badge  = reg
       ? (isOwn
         ? '<span class="vin-badge vin-yours">Your car</span>'
         : '<span class="vin-badge vin-taken">Registered</span>')
       : '<span class="vin-badge vin-available">Available</span>';
-    const detail = [v.chassis, v.model, v.mfg_year, v.color].filter(Boolean).join(' · ');
+    // Column names as Supabase lowercases them from CSV headers
+    const detail = [v.model || v.model_name, v.modelyear, v.make].filter(Boolean).join(' · ');
     return `<div class="vin-result-item" onclick="selectVinEntry(${v.id})">
       <div class="vin-result-main">
-        <span class="vin-result-vin">${escHtml(v.vin)}</span>${badge}
+        <span class="vin-result-vin">${escHtml(vinKey)}</span>${badge}
       </div>
       ${detail ? `<div class="vin-result-detail">${escHtml(detail)}</div>` : ''}
     </div>`;
@@ -895,56 +898,75 @@ async function selectVinEntry(vinId) {
 
   selectedVinEntry = entry;
   document.getElementById('vinSearchResults').classList.add('hidden');
-  document.getElementById('f-vin-search').value = entry.vin;
+  // searched_vin = Toyota VIN (SEARCHED_VIN in CSV, lowercased by Supabase on import)
+  const displayVin = entry.searched_vin || entry.vin || '';
+  document.getElementById('f-vin-search').value = displayVin;
   document.getElementById('vinClearBtn').classList.remove('hidden');
 
-  // Auto-fill form fields
+  // Auto-fill form fields.
+  // Column names match what Supabase produces when importing the combined CSV:
+  //   ALL_CAPS headers (e.g. MODEL_CODE, PROD_FROM) → snake_case with underscores preserved
+  //   PascalCase headers (e.g. DisplacementCC, AirBagLocFront) → all-lowercase, no underscores added
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
-  set('f-vin',   entry.vin);
-  set('f-frame', entry.frame_number);
 
-  if (entry.chassis) {
-    document.getElementById('f-chassis').value = entry.chassis;
-    updateModelOptions();
-  }
-  set('f-model',               entry.model);
-  set('f-model-code',          entry.model_code);
-  set('f-model-name',          entry.model_name);
+  set('f-vin',   displayVin);
+  // frame_short is the closest field (FRAME_SHORT CSV column → frame_short)
+  set('f-frame-short', entry.frame_short);
+
+  // model / model_name come from ALL_CAPS Toyota columns → snake_case preserved
+  set('f-model',      entry.model || entry.model_name);
+  set('f-model-code', entry.model_code);
+  set('f-model-name', entry.model_name);
+
+  // PascalCase NHTSA columns → all-lowercase (no underscores between words)
   set('f-series',              entry.series);
-  set('f-model-year',          entry.model_year);
+  set('f-model-year',          entry.modelyear);
   set('f-make',                entry.make);
   set('f-manufacturer',        entry.manufacturer);
+
+  // Engine — ENGINE Toyota column → engine; NHTSA PascalCase → lowercase no underscores
   set('f-engine',              entry.engine);
-  set('f-engine-manufacturer', entry.engine_manufacturer);
-  set('f-engine-model',        entry.engine_model);
-  set('f-engine-config',       entry.engine_configuration);
-  set('f-engine-cylinders',    entry.engine_cylinders);
-  set('f-engine-hp',           entry.engine_hp);
-  set('f-engine-hp-to',        entry.engine_hp_to);
-  set('f-displacement-cc',     entry.displacement_cc);
-  set('f-displacement-ci',     entry.displacement_ci);
-  set('f-displacement-l',      entry.displacement_l);
-  set('f-year',                entry.mfg_year);
-  set('f-month',               entry.mfg_month);
-  set('f-prod-from',           entry.prod_from);
-  set('f-prod-to',             entry.prod_to);
-  set('f-year-month',          entry.year_month);
-  set('f-frame-short',         entry.frame_short);
-  set('f-plant',               entry.plant);
-  set('f-plant-city',          entry.plant_city);
-  set('f-plant-company-name',  entry.plant_company_name);
-  set('f-plant-country',       entry.plant_country);
-  set('f-plant-state',         entry.plant_state);
+  set('f-engine-manufacturer', entry.enginemanufacturer);
+  set('f-engine-model',        entry.enginemodel);
+  set('f-engine-config',       entry.engineconfiguration);
+  set('f-engine-cylinders',    entry.enginecylinders);
+  set('f-engine-hp',           entry.enginehp);
+  set('f-engine-hp-to',        entry.enginehp_to);   // EngineHP_to had underscore → preserved
+
+  // Displacement — PascalCase → lowercase no added underscores
+  set('f-displacement-cc',     entry.displacementcc);
+  set('f-displacement-ci',     entry.displacementci);
+  set('f-displacement-l',      entry.displacementl);
+
+  // Year/month — parse from YEAR_MONTH (e.g. "198901") or fall back to modelyear
+  const ym = entry.year_month || '';
+  set('f-year',      ym.length >= 4 ? parseInt(ym.slice(0, 4), 10) : (entry.modelyear || null));
+  set('f-month',     ym.length >= 6 ? parseInt(ym.slice(4, 6), 10) : null);
+  set('f-year-month', entry.year_month);
+  set('f-prod-from',  entry.prod_from);
+  set('f-prod-to',    entry.prod_to);
+
+  // Plant — PascalCase → all-lowercase no underscores
+  set('f-plant',              entry.plantcompanyname);
+  set('f-plant-city',         entry.plantcity);
+  set('f-plant-company-name', entry.plantcompanyname);
+  set('f-plant-country',      entry.plantcountry);
+  set('f-plant-state',        entry.plantstate);
+
+  // Transmission — TRANSMISSION Toyota column → transmission; NHTSA PascalCase → lowercase
   set('f-transmission',        entry.transmission);
-  set('f-transmission-speeds', entry.transmission_speeds);
-  set('f-transmission-style',  entry.transmission_style);
-  set('f-grade',               entry.grade);
-  set('f-market',              entry.market);
-  set('f-destination',         entry.destination);
-  set('f-color',               entry.color);
-  set('f-color-code',          entry.color_code);
-  set('f-trim-code',           entry.trim_code);
-  set('f-air-bag-loc-front',   entry.air_bag_loc_front);
+  set('f-transmission-speeds', entry.transmissionspeeds);
+  set('f-transmission-style',  entry.transmissionstyle);
+
+  // Remaining Toyota ALL_CAPS columns → snake_case preserved
+  set('f-grade',      entry.grade);
+  set('f-market',     entry.market);
+  set('f-destination', entry.destination);
+  set('f-color-code', entry.color_code);
+  set('f-trim-code',  entry.trim_code);
+
+  // AirBagLocFront → airbaglocfront (PascalCase → all-lowercase)
+  set('f-air-bag-loc-front', entry.airbaglocfront);
 
   // Show verified status
   const statusEl = document.getElementById('vinStatus');
