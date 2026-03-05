@@ -372,8 +372,17 @@ async function loadRegistryTable(page = 1) {
     return;
   }
 
+  // Batch-load profiles for owner names (avoids broken FK join)
+  const userIds = [...new Set(res.cars.filter(c => c.user_id).map(c => c.user_id))];
+  let profileMap = {};
+  if (userIds.length) {
+    const { data: profs } = await db.from('profiles')
+      .select('id, username, display_name').in('id', userIds);
+    (profs || []).forEach(p => { profileMap[p.id] = p; });
+  }
+
   const offset = (page - 1) * 25;
-  tbody.innerHTML = res.cars.map((car, i) => carRowHTML(car, offset + i + 1)).join('');
+  tbody.innerHTML = res.cars.map((car, i) => carRowHTML(car, offset + i + 1, profileMap)).join('');
   renderPagination(res.page, res.pages);
 }
 
@@ -407,14 +416,20 @@ function quickFilterChassis(chassis) {
 }
 
 // ── TABLE ROW RENDERING ───────────────────────────────────
-function carRowHTML(car, index) {
+function carRowHTML(car, index, profileMap = {}) {
   const thumb = car.primary_image_url
     ? `<img src="${escAttr(car.primary_image_url)}" alt="${escAttr(car.model)}" loading="lazy" />`
     : '<span class="no-thumb">—</span>';
 
-  const engine  = car.engine ? car.engine.split('(')[0].trim() : '—';
-  const owner   = car.profiles?.display_name || car.profiles?.username || car.current_owner_name || '—';
-  const updated = car.updated_at ? formatDate(car.updated_at) : (car.created_at ? formatDate(car.created_at) : '—');
+  const engineVal = car.engine ?? car.enginemodel;
+  const engine    = engineVal ? engineVal.split('(')[0].trim() : '—';
+  const prof      = profileMap[car.user_id];
+  const owner     = prof?.display_name || prof?.username || car.current_owner_name || '—';
+  const updated   = car.updated_at ? formatDate(car.updated_at) : (car.created_at ? formatDate(car.created_at) : '—');
+  const mfgYear   = car.mfg_year || car.modelyear || null;
+  const intColor  = car.interior_color;
+  const intMat    = car.interior_material;
+  const trans     = car.transmission;
 
   return `
     <tr class="registry-row" onclick="showCarDetail(${car.id})">
@@ -422,12 +437,12 @@ function carRowHTML(car, index) {
       <td class="td-photo"><div class="row-thumb">${thumb}</div></td>
       <td><span class="chassis-tag ${chassisTagClass(car.chassis)}">${escHtml(car.chassis)}</span></td>
       <td class="td-model">${escHtml(car.model)}</td>
-      <td class="td-year">${car.mfg_year || '—'}</td>
+      <td class="td-year">${mfgYear || '—'}</td>
       <td class="td-engine">${escHtml(engine)}</td>
       <td>${car.color ? escHtml(car.color) : '—'}</td>
-      <td>${car.interior_color ? escHtml(car.interior_color) : '—'}</td>
-      <td>${car.interior_material ? escHtml(car.interior_material) : '—'}</td>
-      <td>${car.transmission ? escHtml(car.transmission) : '—'}</td>
+      <td>${intColor ? escHtml(intColor) : '—'}</td>
+      <td>${intMat ? escHtml(intMat) : '—'}</td>
+      <td>${trans ? escHtml(trans) : '—'}</td>
       <td>${car.country ? escHtml(car.country) : '—'}</td>
       <td class="td-owner">${escHtml(owner)}</td>
       <td class="td-updated">${updated}</td>
