@@ -254,6 +254,19 @@ DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='airbag_location')  THEN ALTER TABLE cars RENAME COLUMN airbag_location   TO air_bag_loc_front;  END IF;
 END $$;
 
+-- vin_directory columns come directly from the imported CSV.
+-- Supabase lowercases all identifiers on import, so:
+--   ALL_CAPS headers (e.g. SEARCHED_VIN, MODEL_CODE) → snake_case with underscores preserved
+--   PascalCase headers (e.g. DisplacementCC, AirBagLocFront) → all-lowercase, no added underscores
+--               e.g.  DisplacementCC → displacementcc
+--                     AirBagLocFront → airbaglocfront
+--                     EngineManufacturer → enginemanufacturer
+--                     ModelYear → modelyear
+-- Do NOT alter vin_directory column names — the app code reads the lowercased names directly.
+
+-- Ensure RLS and the search index exist regardless of when the table was created.
+ALTER TABLE vin_directory ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_vin_dir_searched_vin ON vin_directory(searched_vin);
 -- Extend the VIN directory with the same columns (all CSV headers present).
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                  TEXT;
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer          TEXT;
