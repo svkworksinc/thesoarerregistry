@@ -293,7 +293,7 @@
             </div>
             <div class="form-group">
               <label for="f-year-month">Year/Month</label>
-              <input type="text" id="f-year-month" placeholder="e.g. 199410" />
+              <input type="text" id="f-year-month" placeholder="e.g. 199410" oninput="syncYearMonth(this.value)" />
             </div>
             <div class="form-group">
               <label for="f-frame-short">Frame Short</label>
@@ -464,11 +464,36 @@
           <div class="form-grid">
             <div class="form-group">
               <label for="f-color">Exterior Color</label>
-              <input type="text" id="f-color" placeholder="e.g. Super White, Midnight Blue Pearl" />
+              <select id="f-color" onchange="syncColorCode(this)">
+                <option value="">Select color…</option>
+                <option value="Diamond White Pearl"        data-code="051">Diamond White Pearl 051</option>
+                <option value="Golden Pearl"               data-code="057">Golden Pearl 057</option>
+                <option value="Millennium Silver Metallic" data-code="1C0">Millennium Silver Metallic 1C0</option>
+                <option value="Platinum Metallic"          data-code="1A0">Platinum Metallic 1A0</option>
+                <option value="Graphite Metallic"          data-code="182">Graphite Metallic 182</option>
+                <option value="Black Onyx"                 data-code="202">Black Onyx 202</option>
+                <option value="Sandstone Beige Metallic"   data-code="4K9">Sandstone Beige Metallic 4K9</option>
+                <option value="Shadow Rose Quartz"         data-code="3K7">Shadow Rose Quartz 3K7</option>
+                <option value="Angora Beige Metallic"      data-code="4P9">Angora Beige Metallic 4P9</option>
+                <option value="Garnet Pearl"               data-code="3K3">Garnet Pearl 3K3</option>
+                <option value="Renaissance Red"            data-code="3L2">Renaissance Red 3L2</option>
+                <option value="Bordeaux Pearl"             data-code="3L4">Bordeaux Pearl 3L4</option>
+                <option value="Baroque Red Metallic"       data-code="3M9">Baroque Red Metallic 3M9</option>
+                <option value="Cinnabar Pearl"             data-code="3N1">Cinnabar Pearl 3N1</option>
+                <option value="Silver Spruce Metallic"     data-code="6M3">Silver Spruce Metallic 6M3</option>
+                <option value="Teal Mist Metallic"         data-code="6N1">Teal Mist Metallic 6N1</option>
+                <option value="Royal Jade Pearl"           data-code="6M2">Royal Jade Pearl 6M2</option>
+                <option value="Classic Green Pearl"        data-code="6P2">Classic Green Pearl 6P2</option>
+                <option value="Imperial Jade Mica"         data-code="6Q7">Imperial Jade Mica 6Q7</option>
+                <option value="Midnight Indigo Pearl"      data-code="8J5">Midnight Indigo Pearl 8J5</option>
+                <option value="Baltic Blue Metallic"       data-code="752">Baltic Blue Metallic 752</option>
+                <option value="Royal Sapphire Pearl"       data-code="8L5">Royal Sapphire Pearl 8L5</option>
+                <option value="Other">Other (enter code manually)</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="f-color-code">Color Code</label>
-              <input type="text" id="f-color-code" placeholder="e.g. 040, 8L6" maxlength="10" />
+              <input type="text" id="f-color-code" placeholder="Auto-filled or enter manually" maxlength="10" />
             </div>
             <div class="form-group">
               <label for="f-trim-code">Trim Code</label>
