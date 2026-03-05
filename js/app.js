@@ -837,6 +837,27 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement?.id === 'regSearchInput') applyHomeFilters();
 });
 
+// ── COLOR & YEAR/MONTH HELPERS ────────────────────────────
+
+// Auto-fill color code when a color is selected from the dropdown
+function syncColorCode(sel) {
+  const code = sel.selectedOptions[0]?.dataset.code || '';
+  document.getElementById('f-color-code').value = code;
+}
+
+// Parse a YYYYMM string (e.g. "199712") into Mfg Year and Mfg Month fields
+function syncYearMonth(val) {
+  const s = (val || '').trim();
+  if (s.length >= 4) {
+    const yr = parseInt(s.slice(0, 4), 10);
+    if (yr >= 1980 && yr <= 2020) document.getElementById('f-year').value = yr;
+  }
+  if (s.length >= 6) {
+    const mo = parseInt(s.slice(4, 6), 10);
+    if (mo >= 1 && mo <= 12) document.getElementById('f-month').value = mo;
+  }
+}
+
 // ── VIN DIRECTORY SEARCH ──────────────────────────────────
 
 function onVinSearchInput() {
@@ -939,9 +960,12 @@ async function selectVinEntry(vinId) {
 
   // Parse year/month from YEAR_MONTH field (e.g. "198901" → year 1989, month 01)
   const ym = entry.year_month || '';
-  set('f-year',       ym.length >= 4 ? parseInt(ym.slice(0, 4), 10) : (entry.modelyear ?? entry.model_year ?? null));
-  set('f-month',      ym.length >= 6 ? parseInt(ym.slice(4, 6), 10) : null);
   set('f-year-month', entry.year_month);
+  if (ym) {
+    syncYearMonth(ym);
+  } else {
+    set('f-year',  entry.modelyear ?? entry.model_year ?? null);
+  }
   set('f-prod-from',  entry.prod_from);
   set('f-prod-to',    entry.prod_to);
 
@@ -958,9 +982,15 @@ async function selectVinEntry(vinId) {
   set('f-grade',       entry.grade);
   set('f-market',      entry.market);
   set('f-destination', entry.destination);
-  set('f-color-code',  entry.color_code);
   set('f-trim-code',   entry.trim_code);
   set('f-air-bag-loc-front', entry.airbaglocfront ?? entry.air_bag_loc_front);
+  // Match color dropdown by color_code from the directory
+  if (entry.color_code) {
+    const colorSel = document.getElementById('f-color');
+    const matched = [...colorSel.options].find(o => o.dataset.code === entry.color_code);
+    if (matched) colorSel.value = matched.value;
+    document.getElementById('f-color-code').value = entry.color_code;
+  }
 
   // Show verified status
   const statusEl = document.getElementById('vinStatus');
@@ -1040,7 +1070,7 @@ async function submitCar(e) {
     model_code:           get('f-model-code')              || null,
     model_name:           get('f-model-name')              || null,
     series:               get('f-series')                  || null,
-    model_year:           parseInt(get('f-model-year'))    || null,
+    modelyear:            parseInt(get('f-model-year'))    || null,
     trim:                 get('f-trim')                    || null,
     make:                 get('f-make')                    || null,
     manufacturer:         get('f-manufacturer')            || null,
@@ -1053,44 +1083,44 @@ async function submitCar(e) {
     year_month:           get('f-year-month')              || null,
     frame_short:          get('f-frame-short')             || null,
     plant:                get('f-plant')                   || null,
-    plant_city:           get('f-plant-city')              || null,
-    plant_company_name:   get('f-plant-company-name')      || null,
-    plant_country:        get('f-plant-country')           || null,
-    plant_state:          get('f-plant-state')             || null,
+    plantcity:            get('f-plant-city')              || null,
+    plantcompanyname:     get('f-plant-company-name')      || null,
+    plantcountry:         get('f-plant-country')           || null,
+    plantstate:           get('f-plant-state')             || null,
     body_type:            get('f-body')                    || null,
     body_shape:           get('f-body-shape')              || null,
     doors:                parseInt(get('f-doors'))         || null,
     engine:               get('f-engine')                  || null,
-    engine_manufacturer:  get('f-engine-manufacturer')     || null,
-    engine_model:         get('f-engine-model')            || null,
-    engine_configuration: get('f-engine-config')           || null,
-    engine_cylinders:     parseInt(get('f-engine-cylinders')) || null,
-    engine_hp:            parseInt(get('f-engine-hp'))     || null,
-    engine_hp_to:         parseInt(get('f-engine-hp-to')) || null,
-    displacement_cc:      parseInt(get('f-displacement-cc'))  || null,
-    displacement_ci:      get('f-displacement-ci')         || null,
-    displacement_l:       get('f-displacement-l')          || null,
+    enginemanufacturer:   get('f-engine-manufacturer')     || null,
+    enginemodel:          get('f-engine-model')            || null,
+    engineconfiguration:  get('f-engine-config')           || null,
+    enginecylinders:      parseInt(get('f-engine-cylinders')) || null,
+    enginehp:             parseInt(get('f-engine-hp'))     || null,
+    enginehp_to:          parseInt(get('f-engine-hp-to'))  || null,
+    displacementcc:       parseInt(get('f-displacement-cc'))  || null,
+    displacementci:       get('f-displacement-ci')         || null,
+    displacementl:        get('f-displacement-l')          || null,
     transmission:         get('f-transmission')            || null,
     gear_shift:           get('f-gear-shift')              || null,
-    transmission_speeds:  get('f-transmission-speeds')     || null,
-    transmission_style:   get('f-transmission-style')      || null,
+    transmissionspeeds:   get('f-transmission-speeds')     || null,
+    transmissionstyle:    get('f-transmission-style')      || null,
     fuel_system:          get('f-fuel-system')             || null,
     drive_side:           get('f-drive')                   || null,
-    air_bag_loc_front:    get('f-air-bag-loc-front')       || null,
+    airbaglocfront:       get('f-air-bag-loc-front')       || null,
     grade:                get('f-grade')                   || null,
-    market:               get('f-market')              || null,
-    destination:          get('f-destination')         || null,
-    color:                get('f-color')               || null,
-    color_code:           get('f-color-code')          || null,
-    trim_code:            get('f-trim-code')           || null,
-    interior_color:       get('f-interior')            || null,
-    interior_material:    get('f-interior-material')   || null,
-    title_status:         get('f-title-status')        || null,
-    verification:         get('f-verification')        || null,
-    country:              get('f-country')             || null,
-    location:             get('f-location')            || null,
-    current_owner_name:   get('f-owner')               || null,
-    notes:                get('f-notes')               || null,
+    market:               get('f-market')                  || null,
+    destination:          get('f-destination')             || null,
+    color:                get('f-color')                   || null,
+    color_code:           get('f-color-code')              || null,
+    trim_code:            get('f-trim-code')               || null,
+    interior_color:       get('f-interior')                || null,
+    interior_material:    get('f-interior-material')       || null,
+    title_status:         get('f-title-status')            || null,
+    verification:         get('f-verification')            || null,
+    country:              get('f-country')                 || null,
+    location:             get('f-location')                || null,
+    current_owner_name:   get('f-owner')                   || null,
+    notes:                get('f-notes')                   || null,
   };
 
   // Track whether VIN came from the directory or was typed manually.
