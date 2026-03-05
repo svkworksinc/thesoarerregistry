@@ -618,7 +618,7 @@ function renderCarDetail(car) {
             ${row('Model Code', car.model_code, true)}
             ${row('Model Name', car.model_name)}
             ${row('Series', car.series)}
-            ${row('Model Year', car.model_year ? String(car.model_year) : null)}
+            ${row('Model Year', car.modelyear ? String(car.modelyear) : null)}
             ${row('Chassis', car.chassis)}
             ${row('Make', car.make)}
             ${row('Manufacturer', car.manufacturer)}
@@ -633,10 +633,10 @@ function renderCarDetail(car) {
             ${row('Production To', car.prod_to)}
             ${row('Frame Short', car.frame_short, true)}
             ${row('Plant', car.plant)}
-            ${row('Plant City', car.plant_city)}
-            ${row('Plant Company', car.plant_company_name)}
-            ${row('Plant Country', car.plant_country)}
-            ${row('Plant State', car.plant_state)}
+            ${row('Plant City', car.plantcity)}
+            ${row('Plant Company', car.plantcompanyname)}
+            ${row('Plant Country', car.plantcountry)}
+            ${row('Plant State', car.plantstate)}
             ${row('Body', car.body_type)}
             ${row('Body Shape', car.body_shape)}
             ${row('Doors', car.doors ? String(car.doors) : null)}
@@ -645,21 +645,21 @@ function renderCarDetail(car) {
           <div class="info-panel">
             <div class="info-panel-title">Specification</div>
             ${row('Engine', car.engine)}
-            ${row('Engine Make', car.engine_manufacturer)}
-            ${row('Engine Model', car.engine_model)}
-            ${row('Configuration', car.engine_configuration)}
-            ${row('Cylinders', car.engine_cylinders ? String(car.engine_cylinders) : null)}
-            ${row('Horsepower', car.engine_hp ? `${car.engine_hp} hp` : null)}
-            ${row('HP (Max)', car.engine_hp_to ? `${car.engine_hp_to} hp` : null)}
-            ${row('Displacement (CC)', car.displacement_cc ? String(car.displacement_cc) : null)}
-            ${row('Displacement (CI)', car.displacement_ci)}
-            ${row('Displacement (L)', car.displacement_l)}
+            ${row('Engine Make', car.enginemanufacturer)}
+            ${row('Engine Model', car.enginemodel)}
+            ${row('Configuration', car.engineconfiguration)}
+            ${row('Cylinders', car.enginecylinders ? String(car.enginecylinders) : null)}
+            ${row('Horsepower', car.enginehp ? `${car.enginehp} hp` : null)}
+            ${row('HP (Max)', car.enginehp_to ? `${car.enginehp_to} hp` : null)}
+            ${row('Displacement (CC)', car.displacementcc ? String(car.displacementcc) : null)}
+            ${row('Displacement (CI)', car.displacementci)}
+            ${row('Displacement (L)', car.displacementl)}
             ${row('Transmission Type', car.transmission)}
             ${row('Transmission', car.gear_shift)}
-            ${row('Transmission Speeds', car.transmission_speeds)}
-            ${row('Transmission Style', car.transmission_style)}
+            ${row('Transmission Speeds', car.transmissionspeeds)}
+            ${row('Transmission Style', car.transmissionstyle)}
             ${row('Driver Position', car.drive_side)}
-            ${row('Airbag Location', car.air_bag_loc_front)}
+            ${row('Airbag Location', car.airbaglocfront)}
           </div>
 
           <div class="info-panel">
@@ -860,7 +860,7 @@ function syncYearMonth(val) {
   const s = (val || '').trim();
   if (s.length >= 4) {
     const yr = parseInt(s.slice(0, 4), 10);
-    if (yr >= 1980 && yr <= 2020) document.getElementById('f-year').value = yr;
+    if (yr >= 1970 && yr <= 2030) document.getElementById('f-year').value = yr;
   }
   if (s.length >= 6) {
     const mo = parseInt(s.slice(4, 6), 10);
@@ -1240,26 +1240,26 @@ async function editCar(id) {
     };
     set('f-model',               car.model);              set('f-trim',               car.trim);
     set('f-model-code',          car.model_code);          set('f-model-name',         car.model_name);
-    set('f-series',              car.series);              set('f-model-year',         car.model_year);
+    set('f-series',              car.series);              set('f-model-year',         car.modelyear);
     set('f-make',                car.make);                set('f-manufacturer',       car.manufacturer);
     set('f-vin',                 car.vin);                 set('f-frame',              car.frame_number);
     set('f-year',                car.mfg_year);            set('f-month',              car.mfg_month);
     set('f-prod-from',           car.prod_from);           set('f-prod-to',            car.prod_to);
     set('f-year-month',          car.year_month);          set('f-frame-short',        car.frame_short);
-    set('f-plant',               car.plant);               set('f-plant-city',         car.plant_city);
-    set('f-plant-company-name',  car.plant_company_name);  set('f-plant-country',      car.plant_country);
-    set('f-plant-state',         car.plant_state);         set('f-body',               car.body_type);
+    set('f-plant',               car.plant);               set('f-plant-city',         car.plantcity);
+    set('f-plant-company-name',  car.plantcompanyname);    set('f-plant-country',      car.plantcountry);
+    set('f-plant-state',         car.plantstate);          set('f-body',               car.body_type);
     set('f-body-shape',          car.body_shape);          set('f-doors',              car.doors);
-    set('f-engine',              car.engine);              set('f-engine-manufacturer',car.engine_manufacturer);
-    set('f-engine-model',        car.engine_model);        set('f-engine-config',      car.engine_configuration);
-    set('f-engine-cylinders',    car.engine_cylinders);    set('f-engine-hp',          car.engine_hp);
-    set('f-engine-hp-to',        car.engine_hp_to);
-    set('f-displacement-cc',     car.displacement_cc);     set('f-displacement-ci',    car.displacement_ci);
-    set('f-displacement-l',      car.displacement_l);
+    set('f-engine',              car.engine);              set('f-engine-manufacturer',car.enginemanufacturer);
+    set('f-engine-model',        car.enginemodel);         set('f-engine-config',      car.engineconfiguration);
+    set('f-engine-cylinders',    car.enginecylinders);     set('f-engine-hp',          car.enginehp);
+    set('f-engine-hp-to',        car.enginehp_to);
+    set('f-displacement-cc',     car.displacementcc);      set('f-displacement-ci',    car.displacementci);
+    set('f-displacement-l',      car.displacementl);
     set('f-transmission',        car.transmission);        set('f-gear-shift',         car.gear_shift);
-    set('f-transmission-speeds', car.transmission_speeds); set('f-transmission-style', car.transmission_style);
+    set('f-transmission-speeds', car.transmissionspeeds);  set('f-transmission-style', car.transmissionstyle);
     set('f-fuel-system',         car.fuel_system);         set('f-drive',              car.drive_side);
-    set('f-air-bag-loc-front',   car.air_bag_loc_front);
+    set('f-air-bag-loc-front',   car.airbaglocfront);
     set('f-grade',               car.grade);               set('f-market',             car.market);
     set('f-destination',         car.destination);
     set('f-color',               car.color);               set('f-color-code',         car.color_code);
