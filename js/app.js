@@ -470,24 +470,34 @@ async function showCarDetail(id) {
     if (isNaN(id)) {
       // VIN or frame number lookup
       const { data: byVin } = await db.from('cars')
-        .select('*, car_images(*)')
+        .select('*')
         .eq('vin', String(id).toUpperCase()).maybeSingle();
       const { data: byFrame } = !byVin
         ? await db.from('cars')
-            .select('*, car_images(*)')
+            .select('*')
             .eq('frame_number', String(id).toUpperCase()).maybeSingle()
         : { data: null };
       car = byVin || byFrame;
       if (!car) throw new Error('Not found');
     } else {
       const { data, error } = await db.from('cars')
-        .select('*, car_images(*)')
-        .eq('id', parseInt(id)).single();
-      if (error || !data) throw new Error('Not found');
+        .select('*')
+        .eq('id', parseInt(id)).maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('Not found');
       car = data;
     }
+
+    // Fetch images separately to avoid FK join cache issues after table recreation
+    const { data: images } = await db.from('car_images')
+      .select('*')
+      .eq('car_id', car.id)
+      .order('is_primary', { ascending: false });
+    car.car_images = images || [];
+
     renderCarDetail(car);
-  } catch {
+  } catch (err) {
+    console.error('showCarDetail error:', err);
     content.innerHTML = `
       <div class="car-detail-header">
         <div class="ph-inner">
