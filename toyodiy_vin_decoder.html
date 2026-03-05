@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ToyoDIY Master Harvester</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 30px; }
+        .box { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        h2 { color: #ef4444; margin-top: 0; }
+        .preview-area { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #475569; margin-top: 15px; min-height: 50px; color: #10b981; font-family: monospace; font-size: 13px; }
+        textarea { width: 100%; height: 80px; background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .btn { padding: 10px 20px; cursor: pointer; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: bold; margin-right: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; background: #0f172a; }
+        th, td { border: 1px solid #334155; padding: 10px; text-align: left; }
+        th { background: #1e293b; color: #ef4444; }
+        .label { font-weight: bold; color: #94a3b8; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>ToyoDIY Master Harvester</h2>
+    <p style="font-size: 14px; color: #94a3b8;">1. Load VINs -> 2. Open Link -> 3. <b>Ctrl+A then Ctrl+C</b> on ToyoDIY -> 4. Return here.</p>
+    
+    <textarea id="vinInput" placeholder="Paste VIN list here..."></textarea><br>
+    
+    <button class="btn" onclick="setupQueue()">1. Load VINs</button>
+    <button class="btn" id="openBtn" onclick="openNext()" style="display:none; background:#10b981;">2. Open Next VIN</button>
+    <button class="btn" onclick="downloadCSV()" style="background:#3b82f6;">3. Download CSV</button>
+
+    <div id="status" style="margin: 15px 0; font-weight: bold;">Status: Waiting for VINs...</div>
+
+    <div class="preview-area">
+        <strong>Last Captured Data:</strong>
+        <div id="livePreview">No data captured yet.</div>
+    </div>
+
+    <table id="resultsTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+let vinQueue = [];
+let currentVin = "";
+let masterData = [];
+
+function setupQueue() {
+    const input = document.getElementById('vinInput').value;
+    vinQueue = input.split('\n').map(v => v.trim()).filter(v => v.length > 0);
+    if(vinQueue.length > 0) {
+        document.getElementById('openBtn').style.display = 'inline-block';
+        document.getElementById('status').innerText = `Status: Loaded ${vinQueue.length} VINs.`;
+    }
+}
+
+function openNext() {
+    if(vinQueue.length === 0) { alert("Queue finished!"); return; }
+    currentVin = vinQueue.shift();
+    window.open(`https://www.toyodiy.com/parts/q?vin=${currentVin}`, '_blank');
+    document.getElementById('status').innerHTML = `Status: Processing <span style="color:#38bdf8">${currentVin}</span>. Copy the page now!`;
+}
+
+// Automatically detects when you return to this tab with new data
+window.addEventListener('focus', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text.toLowerCase().includes("destination") || text.includes(currentVin)) {
+            processText(text, currentVin);
+        }
+    } catch (e) { console.log("Clipboard wait..."); }
+});
+
+function processText(text, vin) {
+    let entry = { "VIN": vin };
+    let previewHtml = "";
+    const lines = text.split('\n');
+
+    lines.forEach(line => {
+        if (line.includes(':')) {
+            let [key, ...valParts] = line.split(':');
+            let val = valParts.join(':').trim();
+            key = key.trim();
+            
+            // Clean up and filter
+            if (key && val && key.length < 35 && !key.toLowerCase().includes("sign in")) {
+                entry[key] = val;
+                previewHtml += `<div><span class="label">${key}:</span> ${val}</div>`;
+            }
+        }
+    });
+
+    if (Object.keys(entry).length > 1) {
+        masterData.push(entry);
+        document.getElementById('livePreview').innerHTML = previewHtml;
+        renderTable();
+    }
+}
+
+function renderTable() {
+    const head = document.getElementById('tableHead');
+    const body = document.getElementById('tableBody');
+    const allKeys = ["VIN", ...new Set(masterData.flatMap(obj => Object.keys(obj)))].filter(k => k !== "VIN");
+    
+    head.innerHTML = `<tr>${allKeys.map(k => `<th>${k}</th>`).join('')}</tr>`;
+    body.innerHTML = masterData.map(row => `<tr>${allKeys.map(k => `<td>${row[k] || ''}</td>`).join('')}</tr>`).join('');
+}
+
+function downloadCSV() {
+    const allKeys = ["VIN", ...new Set(masterData.flatMap(obj => Object.keys(obj)))].filter(k => k !== "VIN");
+    const csv = [allKeys.join(','), ...masterData.map(row => allKeys.map(k => `"${(row[k] || '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "ToyoDIY_Full_Data.csv";
+    a.click();
+}
+</script>
+</body>
+</html>
