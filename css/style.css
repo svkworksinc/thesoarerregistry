@@ -2314,3 +2314,30 @@ textarea { resize: vertical; }
   border-color: var(--success) !important;
   background: rgba(48,160,96,0.06) !important;
 }
+
+/* ── VIN DIRECTORY PAGE ─────────────────────────────────── */
+.ph-sub {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-top: 8px;
+  max-width: 640px;
+}
+.vd-th-sort {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.vd-th-sort:hover { color: var(--accent); }
+.sort-ind {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 3px;
+}
+.vin-dir-table .td-vin {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
