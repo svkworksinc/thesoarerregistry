@@ -1820,7 +1820,7 @@ async function adminDeleteVin(vinId) {
 function applyVinDirFilters() { vinDirPage = 1; loadVinDirectory(); }
 
 function clearVinDirFilters() {
-  ['vinDirSearch', 'vinDirChassis', 'vinDirTrans', 'vinDirYear']
+  ['vinDirSearch', 'vinDirTrans', 'vinDirYear']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   vinDirPage = 1;
   loadVinDirectory();
@@ -1841,62 +1841,62 @@ async function loadVinDirectory(page = vinDirPage) {
   const tbody   = document.getElementById('vinDirTableBody');
   const countEl = document.getElementById('vinDirCount');
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="8" class="table-placeholder">Loading&hellip;</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" class="table-placeholder">Loading&hellip;</td></tr>`;
 
-  const q       = document.getElementById('vinDirSearch')?.value.trim() || '';
-  const chassis = document.getElementById('vinDirChassis')?.value || '';
-  const trans   = document.getElementById('vinDirTrans')?.value || '';
-  const year    = parseInt(document.getElementById('vinDirYear')?.value || '') || null;
+  const q     = document.getElementById('vinDirSearch')?.value.trim() || '';
+  const trans = document.getElementById('vinDirTrans')?.value || '';
+  const year  = parseInt(document.getElementById('vinDirYear')?.value || '') || null;
 
   const PAGE_SIZE = 50;
   const offset    = (page - 1) * PAGE_SIZE;
 
   let query = db.from('vin_directory')
-    .select('vin, frame_short, chassis, model, mfg_year, modelyear, engine, enginemodel, transmission, color', { count: 'exact' });
+    .select('vin, frame_short, model, modelyear, engine, enginemodel, transmission, color_code, make, series, trim', { count: 'exact' });
 
-  if (q)       query = query.or(`vin.ilike.%${q}%,frame_number.ilike.%${q}%,model.ilike.%${q}%`);
-  if (chassis) query = query.eq('chassis', chassis);
-  if (trans)   query = query.eq('transmission', trans);
-  if (year)    query = query.or(`mfg_year.eq.${year},modelyear.eq.${year}`);
+  if (q)     query = query.or(`vin.ilike.%${q}%,frame_short.ilike.%${q}%,model.ilike.%${q}%`);
+  if (trans) query = query.eq('transmission', trans);
+  if (year)  query = query.eq('modelyear', year);
+
+  // Default sort col fallback in case a stale sort.col references a removed column
+  const safeCol = ['vin','model','modelyear','transmission'].includes(vinDirSort.col)
+    ? vinDirSort.col : 'vin';
 
   query = query
-    .order(vinDirSort.col, { ascending: vinDirSort.asc })
+    .order(safeCol, { ascending: vinDirSort.asc })
     .range(offset, offset + PAGE_SIZE - 1);
 
   const { data: vins, count, error } = await query;
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="8" class="table-empty">Error: ${escHtml(error.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="table-empty">Error: ${escHtml(error.message)}</td></tr>`;
     return;
   }
 
   if (countEl) countEl.textContent = count ? `${count.toLocaleString()} VIN${count !== 1 ? 's' : ''}` : '';
 
   if (!vins || !vins.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No VINs found. Try adjusting your search.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No VINs found. Try adjusting your search.</td></tr>`;
     document.getElementById('vinDirPagination').innerHTML = '';
     return;
   }
 
   tbody.innerHTML = vins.map(v => {
-    const yr  = v.mfg_year || v.modelyear || '—';
     const eng = (v.engine || v.enginemodel || '').split('(')[0].trim() || '—';
     return `<tr>
       <td class="mono td-vin">${escHtml(v.vin)}</td>
       <td class="mono" style="font-size:12px;">${escHtml(v.frame_short || '—')}</td>
-      <td><span class="chassis-tag ${chassisTagClass(v.chassis)}">${escHtml(v.chassis || '—')}</span></td>
+      <td>${escHtml(v.make || '—')}</td>
       <td>${escHtml(v.model || '—')}</td>
-      <td class="td-year">${yr}</td>
+      <td class="td-year">${v.modelyear || '—'}</td>
       <td style="font-size:13px;">${escHtml(eng)}</td>
       <td>${escHtml(v.transmission || '—')}</td>
-      <td style="font-size:13px;">${escHtml(v.color || '—')}</td>
     </tr>`;
   }).join('');
 
   // Update sort indicators
-  ['vin','chassis','model','mfg_year','transmission'].forEach(col => {
+  ['vin','model','modelyear','transmission'].forEach(col => {
     const el = document.getElementById(`sort-${col}`);
     if (!el) return;
-    el.textContent = vinDirSort.col === col ? (vinDirSort.asc ? '▲' : '▼') : '⇅';
+    el.textContent = safeCol === col ? (vinDirSort.asc ? '▲' : '▼') : '⇅';
   });
 
   // Pagination

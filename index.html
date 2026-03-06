@@ -1171,13 +1171,6 @@
           />
         </div>
         <div class="toolbar-filters">
-          <select id="vinDirChassis" class="toolbar-select">
-            <option value="">All Chassis</option>
-            <option value="Z10">Z10 &mdash; 1981&ndash;85</option>
-            <option value="Z20">Z20 &mdash; 1986&ndash;91</option>
-            <option value="Z30">Z30 / SC &mdash; 1991&ndash;00</option>
-            <option value="Z40">Z40 / SC430</option>
-          </select>
           <select id="vinDirTrans" class="toolbar-select">
             <option value="">Transmission</option>
             <option value="Automatic">Automatic</option>
@@ -1196,16 +1189,15 @@
             <tr>
               <th class="vd-th-sort" onclick="sortVinDir('vin')">VIN <span class="sort-ind" id="sort-vin"></span></th>
               <th>FRAME NO.</th>
-              <th class="vd-th-sort" onclick="sortVinDir('chassis')">CHASSIS <span class="sort-ind" id="sort-chassis"></span></th>
+              <th>MAKE</th>
               <th class="vd-th-sort" onclick="sortVinDir('model')">MODEL <span class="sort-ind" id="sort-model"></span></th>
-              <th class="vd-th-sort" onclick="sortVinDir('mfg_year')">YEAR <span class="sort-ind" id="sort-mfg_year"></span></th>
+              <th class="vd-th-sort" onclick="sortVinDir('modelyear')">YEAR <span class="sort-ind" id="sort-modelyear"></span></th>
               <th>ENGINE</th>
               <th class="vd-th-sort" onclick="sortVinDir('transmission')">TRANS. <span class="sort-ind" id="sort-transmission"></span></th>
-              <th>COLOR</th>
             </tr>
           </thead>
           <tbody id="vinDirTableBody">
-            <tr><td colspan="8" class="table-placeholder">Loading VIN directory&hellip;</td></tr>
+            <tr><td colspan="7" class="table-placeholder">Loading VIN directory&hellip;</td></tr>
           </tbody>
         </table>
       </div>
