@@ -72,11 +72,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (_) { /* auth resolution failed — proceed as logged-out */ }
   updateNavForUser();
 
-  // ── Step 3: Reload registry with fresh JWT ───────────────────────
+  // ── Step 3: Reload public data with fresh JWT ───────────────────
   // If the stored session had an expired access token, PostgREST would
-  // have rejected the first load even for USING(true) policies.  Now
-  // that getSession() has refreshed the token, this call is safe.
+  // have rejected the first loads even for USING(true) policies. Now
+  // that getSession() has refreshed the token, retry all public data.
+  loadStats();
   loadRegistryTable(1);
+  // Re-run hash nav so a #car/ID link that failed on the first attempt
+  // (expired token) gets a second chance with the refreshed token.
+  if (window.location.hash.startsWith('#car/')) handleHashNav();
 
   // Re-render profile page if it was opened before auth settled.
   if (currentUser &&
@@ -372,8 +376,17 @@ async function loadRegistryTable(page = 1) {
     return;
   }
 
+  // Batch-load profiles for owner names (avoids broken FK join)
+  const userIds = [...new Set(res.cars.filter(c => c.user_id).map(c => c.user_id))];
+  let profileMap = {};
+  if (userIds.length) {
+    const { data: profs } = await db.from('profiles')
+      .select('id, username, display_name').in('id', userIds);
+    (profs || []).forEach(p => { profileMap[p.id] = p; });
+  }
+
   const offset = (page - 1) * 25;
-  tbody.innerHTML = res.cars.map((car, i) => carRowHTML(car, offset + i + 1)).join('');
+  tbody.innerHTML = res.cars.map((car, i) => carRowHTML(car, offset + i + 1, profileMap)).join('');
   renderPagination(res.page, res.pages);
 }
 
@@ -407,14 +420,20 @@ function quickFilterChassis(chassis) {
 }
 
 // ── TABLE ROW RENDERING ───────────────────────────────────
-function carRowHTML(car, index) {
+function carRowHTML(car, index, profileMap = {}) {
   const thumb = car.primary_image_url
     ? `<img src="${escAttr(car.primary_image_url)}" alt="${escAttr(car.model)}" loading="lazy" />`
     : '<span class="no-thumb">—</span>';
 
-  const engine  = car.engine ? car.engine.split('(')[0].trim() : '—';
-  const owner   = car.profiles?.display_name || car.profiles?.username || car.current_owner_name || '—';
-  const updated = car.updated_at ? formatDate(car.updated_at) : (car.created_at ? formatDate(car.created_at) : '—');
+  const engineVal = car.engine ?? car.enginemodel;
+  const engine    = engineVal ? engineVal.split('(')[0].trim() : '—';
+  const prof      = profileMap[car.user_id];
+  const owner     = prof?.display_name || prof?.username || car.current_owner_name || '—';
+  const updated   = car.updated_at ? formatDate(car.updated_at) : (car.created_at ? formatDate(car.created_at) : '—');
+  const mfgYear   = car.mfg_year || car.modelyear || null;
+  const intColor  = car.interior_color;
+  const intMat    = car.interior_material;
+  const trans     = car.transmission;
 
   return `
     <tr class="registry-row" onclick="showCarDetail(${car.id})">
@@ -422,12 +441,12 @@ function carRowHTML(car, index) {
       <td class="td-photo"><div class="row-thumb">${thumb}</div></td>
       <td><span class="chassis-tag ${chassisTagClass(car.chassis)}">${escHtml(car.chassis)}</span></td>
       <td class="td-model">${escHtml(car.model)}</td>
-      <td class="td-year">${car.mfg_year || '—'}</td>
+      <td class="td-year">${mfgYear || '—'}</td>
       <td class="td-engine">${escHtml(engine)}</td>
       <td>${car.color ? escHtml(car.color) : '—'}</td>
-      <td>${car.interior_color ? escHtml(car.interior_color) : '—'}</td>
-      <td>${car.interior_material ? escHtml(car.interior_material) : '—'}</td>
-      <td>${car.transmission ? escHtml(car.transmission) : '—'}</td>
+      <td>${intColor ? escHtml(intColor) : '—'}</td>
+      <td>${intMat ? escHtml(intMat) : '—'}</td>
+      <td>${trans ? escHtml(trans) : '—'}</td>
       <td>${car.country ? escHtml(car.country) : '—'}</td>
       <td class="td-owner">${escHtml(owner)}</td>
       <td class="td-updated">${updated}</td>
@@ -470,24 +489,34 @@ async function showCarDetail(id) {
     if (isNaN(id)) {
       // VIN or frame number lookup
       const { data: byVin } = await db.from('cars')
-        .select('*, car_images(*)')
+        .select('*')
         .eq('vin', String(id).toUpperCase()).maybeSingle();
       const { data: byFrame } = !byVin
         ? await db.from('cars')
-            .select('*, car_images(*)')
+            .select('*')
             .eq('frame_number', String(id).toUpperCase()).maybeSingle()
         : { data: null };
       car = byVin || byFrame;
       if (!car) throw new Error('Not found');
     } else {
       const { data, error } = await db.from('cars')
-        .select('*, car_images(*)')
-        .eq('id', parseInt(id)).single();
-      if (error || !data) throw new Error('Not found');
+        .select('*')
+        .eq('id', parseInt(id)).maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('Not found');
       car = data;
     }
+
+    // Fetch images separately to avoid FK join cache issues after table recreation
+    const { data: images } = await db.from('car_images')
+      .select('*')
+      .eq('car_id', car.id)
+      .order('is_primary', { ascending: false });
+    car.car_images = images || [];
+
     renderCarDetail(car);
-  } catch {
+  } catch (err) {
+    console.error('showCarDetail error:', err);
     content.innerHTML = `
       <div class="car-detail-header">
         <div class="ph-inner">
@@ -608,7 +637,7 @@ function renderCarDetail(car) {
             ${row('Model Code', car.model_code, true)}
             ${row('Model Name', car.model_name)}
             ${row('Series', car.series)}
-            ${row('Model Year', car.model_year ? String(car.model_year) : null)}
+            ${row('Model Year', car.modelyear ? String(car.modelyear) : null)}
             ${row('Chassis', car.chassis)}
             ${row('Make', car.make)}
             ${row('Manufacturer', car.manufacturer)}
@@ -623,10 +652,10 @@ function renderCarDetail(car) {
             ${row('Production To', car.prod_to)}
             ${row('Frame Short', car.frame_short, true)}
             ${row('Plant', car.plant)}
-            ${row('Plant City', car.plant_city)}
-            ${row('Plant Company', car.plant_company_name)}
-            ${row('Plant Country', car.plant_country)}
-            ${row('Plant State', car.plant_state)}
+            ${row('Plant City', car.plantcity)}
+            ${row('Plant Company', car.plantcompanyname)}
+            ${row('Plant Country', car.plantcountry)}
+            ${row('Plant State', car.plantstate)}
             ${row('Body', car.body_type)}
             ${row('Body Shape', car.body_shape)}
             ${row('Doors', car.doors ? String(car.doors) : null)}
@@ -635,21 +664,21 @@ function renderCarDetail(car) {
           <div class="info-panel">
             <div class="info-panel-title">Specification</div>
             ${row('Engine', car.engine)}
-            ${row('Engine Make', car.engine_manufacturer)}
-            ${row('Engine Model', car.engine_model)}
-            ${row('Configuration', car.engine_configuration)}
-            ${row('Cylinders', car.engine_cylinders ? String(car.engine_cylinders) : null)}
-            ${row('Horsepower', car.engine_hp ? `${car.engine_hp} hp` : null)}
-            ${row('HP (Max)', car.engine_hp_to ? `${car.engine_hp_to} hp` : null)}
-            ${row('Displacement (CC)', car.displacement_cc ? String(car.displacement_cc) : null)}
-            ${row('Displacement (CI)', car.displacement_ci)}
-            ${row('Displacement (L)', car.displacement_l)}
+            ${row('Engine Make', car.enginemanufacturer)}
+            ${row('Engine Model', car.enginemodel)}
+            ${row('Configuration', car.engineconfiguration)}
+            ${row('Cylinders', car.enginecylinders ? String(car.enginecylinders) : null)}
+            ${row('Horsepower', car.enginehp ? `${car.enginehp} hp` : null)}
+            ${row('HP (Max)', car.enginehp_to ? `${car.enginehp_to} hp` : null)}
+            ${row('Displacement (CC)', car.displacementcc ? String(car.displacementcc) : null)}
+            ${row('Displacement (CI)', car.displacementci)}
+            ${row('Displacement (L)', car.displacementl)}
             ${row('Transmission Type', car.transmission)}
             ${row('Transmission', car.gear_shift)}
-            ${row('Transmission Speeds', car.transmission_speeds)}
-            ${row('Transmission Style', car.transmission_style)}
+            ${row('Transmission Speeds', car.transmissionspeeds)}
+            ${row('Transmission Style', car.transmissionstyle)}
             ${row('Driver Position', car.drive_side)}
-            ${row('Airbag Location', car.air_bag_loc_front)}
+            ${row('Airbag Location', car.airbaglocfront)}
           </div>
 
           <div class="info-panel">
@@ -837,6 +866,27 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement?.id === 'regSearchInput') applyHomeFilters();
 });
 
+// ── COLOR & YEAR/MONTH HELPERS ────────────────────────────
+
+// Auto-fill color code when a color is selected from the dropdown
+function syncColorCode(sel) {
+  const code = sel.selectedOptions[0]?.dataset.code || '';
+  document.getElementById('f-color-code').value = code;
+}
+
+// Parse a YYYYMM string (e.g. "199712") into Mfg Year and Mfg Month fields
+function syncYearMonth(val) {
+  const s = (val || '').trim();
+  if (s.length >= 4) {
+    const yr = parseInt(s.slice(0, 4), 10);
+    if (yr >= 1970 && yr <= 2030) document.getElementById('f-year').value = yr;
+  }
+  if (s.length >= 6) {
+    const mo = parseInt(s.slice(4, 6), 10);
+    if (mo >= 1 && mo <= 12) document.getElementById('f-month').value = mo;
+  }
+}
+
 // ── VIN DIRECTORY SEARCH ──────────────────────────────────
 
 function onVinSearchInput() {
@@ -852,17 +902,25 @@ function onVinSearchInput() {
 async function searchVinDirectory(q) {
   const resultsEl = document.getElementById('vinSearchResults');
 
-  const { data: vins } = await db.from('vin_directory')
+  resultsEl.innerHTML = '<div class="vin-result-empty">Searching…</div>';
+  resultsEl.classList.remove('hidden');
+
+  const { data: vins, error } = await db.from('vin_directory')
     .select('*').ilike('vin', `%${q}%`).order('vin').limit(10);
 
-  if (!vins || !vins.length) {
-    resultsEl.innerHTML = '<div class="vin-result-empty">No matching VINs in directory — you can still enter it manually below.</div>';
-    resultsEl.classList.remove('hidden');
+  if (error) {
+    console.error('vin_directory query error:', error);
+    resultsEl.innerHTML = `<div class="vin-result-empty">Search error: ${escHtml(error.message)} — check Supabase RLS policies.</div>`;
     return;
   }
 
-  // Check which are already registered
-  const vinValues = vins.map(v => v.vin);
+  if (!vins || !vins.length) {
+    resultsEl.innerHTML = '<div class="vin-result-empty">No matching VINs in directory — you can still enter it manually below.</div>';
+    return;
+  }
+
+  // Check which are already registered in the cars table
+  const vinValues = vins.map(v => v.vin).filter(Boolean);
   const { data: registered } = await db.from('cars')
     .select('vin, current_owner_name, user_id')
     .in('vin', vinValues).eq('status', 'active');
@@ -870,17 +928,19 @@ async function searchVinDirectory(q) {
   (registered || []).forEach(r => { regMap[r.vin] = r; });
 
   resultsEl.innerHTML = vins.map(v => {
-    const reg   = regMap[v.vin];
-    const isOwn = reg && currentUser && reg.user_id === currentUser.id;
-    const badge = reg
+    const vinKey = v.vin;
+    const reg    = regMap[vinKey];
+    const isOwn  = reg && currentUser && reg.user_id === currentUser.id;
+    const badge  = reg
       ? (isOwn
         ? '<span class="vin-badge vin-yours">Your car</span>'
         : '<span class="vin-badge vin-taken">Registered</span>')
       : '<span class="vin-badge vin-available">Available</span>';
-    const detail = [v.chassis, v.model, v.mfg_year, v.color].filter(Boolean).join(' · ');
+    // Column names as Supabase lowercases them from CSV headers
+    const detail = [v.model || v.model_name, v.modelyear, v.make].filter(Boolean).join(' · ');
     return `<div class="vin-result-item" onclick="selectVinEntry(${v.id})">
       <div class="vin-result-main">
-        <span class="vin-result-vin">${escHtml(v.vin)}</span>${badge}
+        <span class="vin-result-vin">${escHtml(vinKey)}</span>${badge}
       </div>
       ${detail ? `<div class="vin-result-detail">${escHtml(detail)}</div>` : ''}
     </div>`;
@@ -898,53 +958,68 @@ async function selectVinEntry(vinId) {
   document.getElementById('f-vin-search').value = entry.vin;
   document.getElementById('vinClearBtn').classList.remove('hidden');
 
-  // Auto-fill form fields
+  // Auto-fill form fields.
+  // Uses ?? fallbacks to handle both possible Supabase import conventions:
+  //   PascalCase CSV headers may become all-lowercase (displacementcc) OR
+  //   snake_case if the table was created manually (displacement_cc).
   const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
-  set('f-vin',   entry.vin);
-  set('f-frame', entry.frame_number);
 
-  if (entry.chassis) {
-    document.getElementById('f-chassis').value = entry.chassis;
-    updateModelOptions();
-  }
-  set('f-model',               entry.model);
-  set('f-model-code',          entry.model_code);
-  set('f-model-name',          entry.model_name);
-  set('f-series',              entry.series);
-  set('f-model-year',          entry.model_year);
-  set('f-make',                entry.make);
-  set('f-manufacturer',        entry.manufacturer);
+  set('f-vin',        entry.vin);
+  set('f-frame-short', entry.frame_short);
+
+  set('f-model',      entry.model ?? entry.model_name);
+  set('f-model-code', entry.model_code);
+  set('f-model-name', entry.model_name);
+  set('f-series',     entry.series);
+  set('f-model-year', entry.modelyear ?? entry.model_year);
+  set('f-make',       entry.make);
+  set('f-manufacturer', entry.manufacturer);
+
   set('f-engine',              entry.engine);
-  set('f-engine-manufacturer', entry.engine_manufacturer);
-  set('f-engine-model',        entry.engine_model);
-  set('f-engine-config',       entry.engine_configuration);
-  set('f-engine-cylinders',    entry.engine_cylinders);
-  set('f-engine-hp',           entry.engine_hp);
-  set('f-engine-hp-to',        entry.engine_hp_to);
-  set('f-displacement-cc',     entry.displacement_cc);
-  set('f-displacement-ci',     entry.displacement_ci);
-  set('f-displacement-l',      entry.displacement_l);
-  set('f-year',                entry.mfg_year);
-  set('f-month',               entry.mfg_month);
-  set('f-prod-from',           entry.prod_from);
-  set('f-prod-to',             entry.prod_to);
-  set('f-year-month',          entry.year_month);
-  set('f-frame-short',         entry.frame_short);
-  set('f-plant',               entry.plant);
-  set('f-plant-city',          entry.plant_city);
-  set('f-plant-company-name',  entry.plant_company_name);
-  set('f-plant-country',       entry.plant_country);
-  set('f-plant-state',         entry.plant_state);
+  set('f-engine-manufacturer', entry.enginemanufacturer ?? entry.engine_manufacturer);
+  set('f-engine-model',        entry.enginemodel        ?? entry.engine_model);
+  set('f-engine-config',       entry.engineconfiguration ?? entry.engine_configuration);
+  set('f-engine-cylinders',    entry.enginecylinders    ?? entry.engine_cylinders);
+  set('f-engine-hp',           entry.enginehp           ?? entry.engine_hp);
+  set('f-engine-hp-to',        entry.enginehp_to        ?? entry.engine_hp_to);
+
+  set('f-displacement-cc',     entry.displacementcc  ?? entry.displacement_cc);
+  set('f-displacement-ci',     entry.displacementci  ?? entry.displacement_ci);
+  set('f-displacement-l',      entry.displacementl   ?? entry.displacement_l);
+
+  // Parse year/month from YEAR_MONTH field (e.g. "198901" → year 1989, month 01)
+  const ym = entry.year_month || '';
+  set('f-year-month', entry.year_month);
+  if (ym) {
+    syncYearMonth(ym);
+  } else {
+    set('f-year',  entry.modelyear ?? entry.model_year ?? null);
+  }
+  set('f-prod-from',  entry.prod_from);
+  set('f-prod-to',    entry.prod_to);
+
+  set('f-plant',              entry.plantcompanyname ?? entry.plant_company_name);
+  set('f-plant-city',         entry.plantcity        ?? entry.plant_city);
+  set('f-plant-company-name', entry.plantcompanyname ?? entry.plant_company_name);
+  set('f-plant-country',      entry.plantcountry     ?? entry.plant_country);
+  set('f-plant-state',        entry.plantstate       ?? entry.plant_state);
+
   set('f-transmission',        entry.transmission);
-  set('f-transmission-speeds', entry.transmission_speeds);
-  set('f-transmission-style',  entry.transmission_style);
-  set('f-grade',               entry.grade);
-  set('f-market',              entry.market);
-  set('f-destination',         entry.destination);
-  set('f-color',               entry.color);
-  set('f-color-code',          entry.color_code);
-  set('f-trim-code',           entry.trim_code);
-  set('f-air-bag-loc-front',   entry.air_bag_loc_front);
+  set('f-transmission-speeds', entry.transmissionspeeds ?? entry.transmission_speeds);
+  set('f-transmission-style',  entry.transmissionstyle  ?? entry.transmission_style);
+
+  set('f-grade',       entry.grade);
+  set('f-market',      entry.market);
+  set('f-destination', entry.destination);
+  set('f-trim-code',   entry.trim_code);
+  set('f-air-bag-loc-front', entry.airbaglocfront ?? entry.air_bag_loc_front);
+  // Match color dropdown by color_code from the directory
+  if (entry.color_code) {
+    const colorSel = document.getElementById('f-color');
+    const matched = [...colorSel.options].find(o => o.dataset.code === entry.color_code);
+    if (matched) colorSel.value = matched.value;
+    document.getElementById('f-color-code').value = entry.color_code;
+  }
 
   // Show verified status
   const statusEl = document.getElementById('vinStatus');
@@ -1024,7 +1099,7 @@ async function submitCar(e) {
     model_code:           get('f-model-code')              || null,
     model_name:           get('f-model-name')              || null,
     series:               get('f-series')                  || null,
-    model_year:           parseInt(get('f-model-year'))    || null,
+    modelyear:            parseInt(get('f-model-year'))    || null,
     trim:                 get('f-trim')                    || null,
     make:                 get('f-make')                    || null,
     manufacturer:         get('f-manufacturer')            || null,
@@ -1037,44 +1112,44 @@ async function submitCar(e) {
     year_month:           get('f-year-month')              || null,
     frame_short:          get('f-frame-short')             || null,
     plant:                get('f-plant')                   || null,
-    plant_city:           get('f-plant-city')              || null,
-    plant_company_name:   get('f-plant-company-name')      || null,
-    plant_country:        get('f-plant-country')           || null,
-    plant_state:          get('f-plant-state')             || null,
+    plantcity:            get('f-plant-city')              || null,
+    plantcompanyname:     get('f-plant-company-name')      || null,
+    plantcountry:         get('f-plant-country')           || null,
+    plantstate:           get('f-plant-state')             || null,
     body_type:            get('f-body')                    || null,
     body_shape:           get('f-body-shape')              || null,
     doors:                parseInt(get('f-doors'))         || null,
     engine:               get('f-engine')                  || null,
-    engine_manufacturer:  get('f-engine-manufacturer')     || null,
-    engine_model:         get('f-engine-model')            || null,
-    engine_configuration: get('f-engine-config')           || null,
-    engine_cylinders:     parseInt(get('f-engine-cylinders')) || null,
-    engine_hp:            parseInt(get('f-engine-hp'))     || null,
-    engine_hp_to:         parseInt(get('f-engine-hp-to')) || null,
-    displacement_cc:      parseInt(get('f-displacement-cc'))  || null,
-    displacement_ci:      get('f-displacement-ci')         || null,
-    displacement_l:       get('f-displacement-l')          || null,
+    enginemanufacturer:   get('f-engine-manufacturer')     || null,
+    enginemodel:          get('f-engine-model')            || null,
+    engineconfiguration:  get('f-engine-config')           || null,
+    enginecylinders:      parseInt(get('f-engine-cylinders')) || null,
+    enginehp:             parseInt(get('f-engine-hp'))     || null,
+    enginehp_to:          parseInt(get('f-engine-hp-to'))  || null,
+    displacementcc:       parseInt(get('f-displacement-cc'))  || null,
+    displacementci:       get('f-displacement-ci')         || null,
+    displacementl:        get('f-displacement-l')          || null,
     transmission:         get('f-transmission')            || null,
     gear_shift:           get('f-gear-shift')              || null,
-    transmission_speeds:  get('f-transmission-speeds')     || null,
-    transmission_style:   get('f-transmission-style')      || null,
+    transmissionspeeds:   get('f-transmission-speeds')     || null,
+    transmissionstyle:    get('f-transmission-style')      || null,
     fuel_system:          get('f-fuel-system')             || null,
     drive_side:           get('f-drive')                   || null,
-    air_bag_loc_front:    get('f-air-bag-loc-front')       || null,
+    airbaglocfront:       get('f-air-bag-loc-front')       || null,
     grade:                get('f-grade')                   || null,
-    market:               get('f-market')              || null,
-    destination:          get('f-destination')         || null,
-    color:                get('f-color')               || null,
-    color_code:           get('f-color-code')          || null,
-    trim_code:            get('f-trim-code')           || null,
-    interior_color:       get('f-interior')            || null,
-    interior_material:    get('f-interior-material')   || null,
-    title_status:         get('f-title-status')        || null,
-    verification:         get('f-verification')        || null,
-    country:              get('f-country')             || null,
-    location:             get('f-location')            || null,
-    current_owner_name:   get('f-owner')               || null,
-    notes:                get('f-notes')               || null,
+    market:               get('f-market')                  || null,
+    destination:          get('f-destination')             || null,
+    color:                get('f-color')                   || null,
+    color_code:           get('f-color-code')              || null,
+    trim_code:            get('f-trim-code')               || null,
+    interior_color:       get('f-interior')                || null,
+    interior_material:    get('f-interior-material')       || null,
+    title_status:         get('f-title-status')            || null,
+    verification:         get('f-verification')            || null,
+    country:              get('f-country')                 || null,
+    location:             get('f-location')                || null,
+    current_owner_name:   get('f-owner')                   || null,
+    notes:                get('f-notes')                   || null,
   };
 
   // Track whether VIN came from the directory or was typed manually.
@@ -1163,9 +1238,13 @@ function handleCarError(error, errEl) {
 
 async function editCar(id) {
   try {
-    const { data: car } = await db.from('cars')
-      .select('*, car_images(*)').eq('id', id).single();
+    const { data: car, error } = await db.from('cars')
+      .select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
     if (!car) throw new Error('Not found');
+    const { data: carImages } = await db.from('car_images')
+      .select('*').eq('car_id', id).order('is_primary', { ascending: false });
+    car.car_images = carImages || [];
 
     showPage('submit');
     document.getElementById('editCarId').value = id;
@@ -1180,26 +1259,26 @@ async function editCar(id) {
     };
     set('f-model',               car.model);              set('f-trim',               car.trim);
     set('f-model-code',          car.model_code);          set('f-model-name',         car.model_name);
-    set('f-series',              car.series);              set('f-model-year',         car.model_year);
+    set('f-series',              car.series);              set('f-model-year',         car.modelyear);
     set('f-make',                car.make);                set('f-manufacturer',       car.manufacturer);
     set('f-vin',                 car.vin);                 set('f-frame',              car.frame_number);
     set('f-year',                car.mfg_year);            set('f-month',              car.mfg_month);
     set('f-prod-from',           car.prod_from);           set('f-prod-to',            car.prod_to);
     set('f-year-month',          car.year_month);          set('f-frame-short',        car.frame_short);
-    set('f-plant',               car.plant);               set('f-plant-city',         car.plant_city);
-    set('f-plant-company-name',  car.plant_company_name);  set('f-plant-country',      car.plant_country);
-    set('f-plant-state',         car.plant_state);         set('f-body',               car.body_type);
+    set('f-plant',               car.plant);               set('f-plant-city',         car.plantcity);
+    set('f-plant-company-name',  car.plantcompanyname);    set('f-plant-country',      car.plantcountry);
+    set('f-plant-state',         car.plantstate);          set('f-body',               car.body_type);
     set('f-body-shape',          car.body_shape);          set('f-doors',              car.doors);
-    set('f-engine',              car.engine);              set('f-engine-manufacturer',car.engine_manufacturer);
-    set('f-engine-model',        car.engine_model);        set('f-engine-config',      car.engine_configuration);
-    set('f-engine-cylinders',    car.engine_cylinders);    set('f-engine-hp',          car.engine_hp);
-    set('f-engine-hp-to',        car.engine_hp_to);
-    set('f-displacement-cc',     car.displacement_cc);     set('f-displacement-ci',    car.displacement_ci);
-    set('f-displacement-l',      car.displacement_l);
+    set('f-engine',              car.engine);              set('f-engine-manufacturer',car.enginemanufacturer);
+    set('f-engine-model',        car.enginemodel);         set('f-engine-config',      car.engineconfiguration);
+    set('f-engine-cylinders',    car.enginecylinders);     set('f-engine-hp',          car.enginehp);
+    set('f-engine-hp-to',        car.enginehp_to);
+    set('f-displacement-cc',     car.displacementcc);      set('f-displacement-ci',    car.displacementci);
+    set('f-displacement-l',      car.displacementl);
     set('f-transmission',        car.transmission);        set('f-gear-shift',         car.gear_shift);
-    set('f-transmission-speeds', car.transmission_speeds); set('f-transmission-style', car.transmission_style);
+    set('f-transmission-speeds', car.transmissionspeeds);  set('f-transmission-style', car.transmissionstyle);
     set('f-fuel-system',         car.fuel_system);         set('f-drive',              car.drive_side);
-    set('f-air-bag-loc-front',   car.air_bag_loc_front);
+    set('f-air-bag-loc-front',   car.airbaglocfront);
     set('f-grade',               car.grade);               set('f-market',             car.market);
     set('f-destination',         car.destination);
     set('f-color',               car.color);               set('f-color-code',         car.color_code);
@@ -1229,7 +1308,8 @@ async function editCar(id) {
           ${img.is_primary ? '<span style="position:absolute;bottom:3px;left:4px;font-size:10px;color:gold;">&#9733;</span>' : ''}
         </div>`).join('');
     }
-  } catch {
+  } catch (err) {
+    console.error('editCar error:', err);
     alert('Could not load car data for editing.');
   }
 }

@@ -181,6 +181,32 @@ CREATE POLICY "storage_delete" ON storage.objects
 -- Safe to run on an existing database (IF NOT EXISTS / IF NOT EXISTS guard)
 -- ================================================================
 
+-- Core registration columns (also in CREATE TABLE, but added here so they
+-- exist even if the table was recreated from a CSV import without these fields)
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS user_id            UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS vin                TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS frame_number       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS chassis            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS model              TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS trim               TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS color              TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS color_code         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS mfg_year           INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS mfg_month          INTEGER;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS transmission       TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS engine             TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS drive_side         TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS location           TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS country            TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS body_type          TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS targa_top          BOOLEAN DEFAULT FALSE;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS current_owner_name TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS notes              TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS primary_image_url  TEXT;
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS status             TEXT DEFAULT 'active';
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS created_at         TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS updated_at         TIMESTAMPTZ DEFAULT NOW();
+-- Extended registration columns
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS interior_color    TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS interior_material TEXT;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS plant             TEXT;
@@ -254,6 +280,19 @@ DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cars' AND column_name='airbag_location')  THEN ALTER TABLE cars RENAME COLUMN airbag_location   TO air_bag_loc_front;  END IF;
 END $$;
 
+-- vin_directory columns come directly from the imported CSV.
+-- Supabase lowercases all identifiers on import, so:
+--   ALL_CAPS headers (e.g. SEARCHED_VIN, MODEL_CODE) → snake_case with underscores preserved
+--   PascalCase headers (e.g. DisplacementCC, AirBagLocFront) → all-lowercase, no added underscores
+--               e.g.  DisplacementCC → displacementcc
+--                     AirBagLocFront → airbaglocfront
+--                     EngineManufacturer → enginemanufacturer
+--                     ModelYear → modelyear
+-- Do NOT alter vin_directory column names — the app code reads the lowercased names directly.
+
+-- Ensure RLS and the search index exist regardless of when the table was created.
+ALTER TABLE vin_directory ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_vin_dir_vin ON vin_directory(vin);
 -- Extend the VIN directory with the same columns (all CSV headers present).
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS make                  TEXT;
 ALTER TABLE vin_directory ADD COLUMN IF NOT EXISTS manufacturer          TEXT;
