@@ -1145,6 +1145,76 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════
+       VIN DIRECTORY PAGE
+       ═══════════════════════════════════════ -->
+  <div id="page-vin-directory" class="page">
+
+    <div class="page-header">
+      <div class="ph-inner">
+        <div class="ph-eyebrow">Database</div>
+        <h1>VIN Directory</h1>
+        <p class="ph-sub">Browse the complete known VIN database for Toyota Soarer &amp; Lexus SC. Use the filters to find a specific chassis, engine, or model variant.</p>
+      </div>
+    </div>
+
+    <div class="registry-section" style="padding-top:0;">
+
+      <div class="registry-toolbar">
+        <div class="toolbar-search-group">
+          <input
+            type="text"
+            id="vinDirSearch"
+            class="toolbar-search"
+            placeholder="Search VIN, frame number, model&hellip;"
+            onkeydown="if(event.key==='Enter') applyVinDirFilters()"
+          />
+        </div>
+        <div class="toolbar-filters">
+          <select id="vinDirChassis" class="toolbar-select">
+            <option value="">All Chassis</option>
+            <option value="Z10">Z10 &mdash; 1981&ndash;85</option>
+            <option value="Z20">Z20 &mdash; 1986&ndash;91</option>
+            <option value="Z30">Z30 / SC &mdash; 1991&ndash;00</option>
+            <option value="Z40">Z40 / SC430</option>
+          </select>
+          <select id="vinDirTrans" class="toolbar-select">
+            <option value="">Transmission</option>
+            <option value="Automatic">Automatic</option>
+            <option value="Manual">Manual</option>
+          </select>
+          <input type="number" id="vinDirYear" class="toolbar-search" style="max-width:100px;" placeholder="Year" min="1981" max="2010" />
+          <button class="btn btn-sm btn-accent" onclick="applyVinDirFilters()">Search</button>
+          <button class="btn btn-sm btn-ghost" onclick="clearVinDirFilters()">Clear</button>
+        </div>
+        <span class="toolbar-count" id="vinDirCount"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="registry-table vin-dir-table">
+          <thead>
+            <tr>
+              <th class="vd-th-sort" onclick="sortVinDir('vin')">VIN <span class="sort-ind" id="sort-vin"></span></th>
+              <th>FRAME NO.</th>
+              <th class="vd-th-sort" onclick="sortVinDir('chassis')">CHASSIS <span class="sort-ind" id="sort-chassis"></span></th>
+              <th class="vd-th-sort" onclick="sortVinDir('model')">MODEL <span class="sort-ind" id="sort-model"></span></th>
+              <th class="vd-th-sort" onclick="sortVinDir('mfg_year')">YEAR <span class="sort-ind" id="sort-mfg_year"></span></th>
+              <th>ENGINE</th>
+              <th class="vd-th-sort" onclick="sortVinDir('transmission')">TRANS. <span class="sort-ind" id="sort-transmission"></span></th>
+              <th>COLOR</th>
+            </tr>
+          </thead>
+          <tbody id="vinDirTableBody">
+            <tr><td colspan="8" class="table-placeholder">Loading VIN directory&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="vinDirPagination" class="pagination" style="margin-top:16px;"></div>
+
+    </div>
+  </div>
+
 </main><!-- /app -->
 
 <!-- FOOTER -->

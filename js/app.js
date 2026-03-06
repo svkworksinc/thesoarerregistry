@@ -31,6 +31,8 @@ let pendingFiles   = [];
 let registryPage   = 1;
 let vinSearchTimeout = null;
 let selectedVinEntry = null;
+let vinDirPage     = 1;
+let vinDirSort     = { col: 'vin', asc: true };
 
 // ── SHARED HELPERS ────────────────────────────────────────
 /** Returns "Jan 1994" or "1994" or "" */
@@ -146,10 +148,11 @@ function showPage(name) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  if (target === 'home') loadRegistryTable(registryPage);
-  if (name === 'profile') loadProfile();
-  if (name === 'submit')  { resetForm(); updateSubmitNotice(); }
-  if (name === 'admin')   loadAdminPanel();
+  if (target === 'home')          loadRegistryTable(registryPage);
+  if (name === 'profile')         loadProfile();
+  if (name === 'submit')          { resetForm(); updateSubmitNotice(); }
+  if (name === 'admin')           loadAdminPanel();
+  if (name === 'vin-directory')   loadVinDirectory();
   if (name !== 'car')     window.location.hash = '';
 }
 
@@ -1810,4 +1813,105 @@ async function adminDeleteVin(vinId) {
   const { error } = await db.from('vin_directory').delete().eq('id', vinId);
   if (error) { alert('Error: ' + error.message); return; }
   loadAdminVins();
+}
+
+// ── PUBLIC VIN DIRECTORY PAGE ──────────────────────────────
+
+function applyVinDirFilters() { vinDirPage = 1; loadVinDirectory(); }
+
+function clearVinDirFilters() {
+  ['vinDirSearch', 'vinDirChassis', 'vinDirTrans', 'vinDirYear']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  vinDirPage = 1;
+  loadVinDirectory();
+}
+
+function sortVinDir(col) {
+  if (vinDirSort.col === col) {
+    vinDirSort.asc = !vinDirSort.asc;
+  } else {
+    vinDirSort = { col, asc: true };
+  }
+  vinDirPage = 1;
+  loadVinDirectory();
+}
+
+async function loadVinDirectory(page = vinDirPage) {
+  vinDirPage = page;
+  const tbody   = document.getElementById('vinDirTableBody');
+  const countEl = document.getElementById('vinDirCount');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" class="table-placeholder">Loading&hellip;</td></tr>`;
+
+  const q       = document.getElementById('vinDirSearch')?.value.trim() || '';
+  const chassis = document.getElementById('vinDirChassis')?.value || '';
+  const trans   = document.getElementById('vinDirTrans')?.value || '';
+  const year    = parseInt(document.getElementById('vinDirYear')?.value || '') || null;
+
+  const PAGE_SIZE = 50;
+  const offset    = (page - 1) * PAGE_SIZE;
+
+  let query = db.from('vin_directory')
+    .select('vin, frame_number, chassis, model, mfg_year, modelyear, engine, enginemodel, transmission, color', { count: 'exact' });
+
+  if (q)       query = query.or(`vin.ilike.%${q}%,frame_number.ilike.%${q}%,model.ilike.%${q}%`);
+  if (chassis) query = query.eq('chassis', chassis);
+  if (trans)   query = query.eq('transmission', trans);
+  if (year)    query = query.or(`mfg_year.eq.${year},modelyear.eq.${year}`);
+
+  query = query
+    .order(vinDirSort.col, { ascending: vinDirSort.asc })
+    .range(offset, offset + PAGE_SIZE - 1);
+
+  const { data: vins, count, error } = await query;
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="8" class="table-empty">Error: ${escHtml(error.message)}</td></tr>`;
+    return;
+  }
+
+  if (countEl) countEl.textContent = count ? `${count.toLocaleString()} VIN${count !== 1 ? 's' : ''}` : '';
+
+  if (!vins || !vins.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No VINs found. Try adjusting your search.</td></tr>`;
+    document.getElementById('vinDirPagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = vins.map(v => {
+    const yr  = v.mfg_year || v.modelyear || '—';
+    const eng = (v.engine || v.enginemodel || '').split('(')[0].trim() || '—';
+    return `<tr>
+      <td class="mono td-vin">${escHtml(v.vin)}</td>
+      <td class="mono" style="font-size:12px;">${escHtml(v.frame_number || '—')}</td>
+      <td><span class="chassis-tag ${chassisTagClass(v.chassis)}">${escHtml(v.chassis || '—')}</span></td>
+      <td>${escHtml(v.model || '—')}</td>
+      <td class="td-year">${yr}</td>
+      <td style="font-size:13px;">${escHtml(eng)}</td>
+      <td>${escHtml(v.transmission || '—')}</td>
+      <td style="font-size:13px;">${escHtml(v.color || '—')}</td>
+    </tr>`;
+  }).join('');
+
+  // Update sort indicators
+  ['vin','chassis','model','mfg_year','transmission'].forEach(col => {
+    const el = document.getElementById(`sort-${col}`);
+    if (!el) return;
+    el.textContent = vinDirSort.col === col ? (vinDirSort.asc ? '▲' : '▼') : '⇅';
+  });
+
+  // Pagination
+  const totalPages = Math.ceil((count || 0) / PAGE_SIZE);
+  const pager = document.getElementById('vinDirPagination');
+  if (totalPages <= 1) { pager.innerHTML = ''; return; }
+  const range = pagRange(page, totalPages);
+  let html = page > 1
+    ? `<button class="page-btn" onclick="loadVinDirectory(${page - 1})">&#8249;</button>` : '';
+  range.forEach(p => {
+    html += p === '...'
+      ? `<button class="page-btn" disabled>&hellip;</button>`
+      : `<button class="page-btn${p === page ? ' active' : ''}" onclick="loadVinDirectory(${p})">${p}</button>`;
+  });
+  if (page < totalPages)
+    html += `<button class="page-btn" onclick="loadVinDirectory(${page + 1})">&#8250;</button>`;
+  pager.innerHTML = html;
 }
