@@ -1852,7 +1852,7 @@ async function loadVinDirectory(page = vinDirPage) {
   const offset    = (page - 1) * PAGE_SIZE;
 
   let query = db.from('vin_directory')
-    .select('vin, frame_number, chassis, model, mfg_year, modelyear, engine, enginemodel, transmission, color', { count: 'exact' });
+    .select('vin, frame_short, chassis, model, mfg_year, modelyear, engine, enginemodel, transmission, color', { count: 'exact' });
 
   if (q)       query = query.or(`vin.ilike.%${q}%,frame_number.ilike.%${q}%,model.ilike.%${q}%`);
   if (chassis) query = query.eq('chassis', chassis);
@@ -1882,7 +1882,7 @@ async function loadVinDirectory(page = vinDirPage) {
     const eng = (v.engine || v.enginemodel || '').split('(')[0].trim() || '—';
     return `<tr>
       <td class="mono td-vin">${escHtml(v.vin)}</td>
-      <td class="mono" style="font-size:12px;">${escHtml(v.frame_number || '—')}</td>
+      <td class="mono" style="font-size:12px;">${escHtml(v.frame_short || '—')}</td>
       <td><span class="chassis-tag ${chassisTagClass(v.chassis)}">${escHtml(v.chassis || '—')}</span></td>
       <td>${escHtml(v.model || '—')}</td>
       <td class="td-year">${yr}</td>
